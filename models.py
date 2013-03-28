@@ -7,7 +7,10 @@ class Account(models.Model):
     cat = models.CharField(max_length=200, choices=(("equity", "Equity"), ("negEq", "Negative equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expence")))
     parent = models.ForeignKey("self", related_name="children", null=True, blank=True)
     def __unicode__(self):
-        return self.name
+        if self.parent:
+            return self.parent.__unicode__()+":"+self.name
+        else:
+            return self.name
     def transactions(self):
         return Transactions.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).all()
     def balance(self):
