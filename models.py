@@ -4,13 +4,15 @@ from django.db import models
 # Create your models here.
 class Account(models.Model):
     name = models.CharField(max_length=200)
-    cat = models.CharField(max_length=200, choices=(("equity", "Equity"), ("negEq", "Negative equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expence")))
+    cat = models.CharField(max_length=200, choices=(("equity", "Equity"), ("negEq", "Negative equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense")))
     parent = models.ForeignKey("self", related_name="children", null=True, blank=True)
-    def __unicode__(self):
+    def long_name(self):
         if self.parent:
             return self.parent.__unicode__()+":"+self.name
         else:
             return self.name
+    def __unicode__(self):
+        return self.long_name()
     def transactions(self):
         return Transactions.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).all()
     def balance(self):
@@ -23,6 +25,12 @@ class Account(models.Model):
             return "Dr {}".format(balance)
         else:
             return "Cr {}".format(balance)
+    def dt_count(self):
+        return self.debits.all().count()
+    def ct_count(self):
+        return self.credits.all().count()
+    def t_count(self):
+        return self.dt_counts() + self.ct_counts()
 
 def source_doc_file_path(instance, filename):
     return "sb/{}/{}".format(instance.number, filename)
@@ -34,6 +42,8 @@ class SourceDoc(models.Model):
     comments = models.TextField(blank=True)
     def __unicode__(self):
         return unicode(self.number)
+    def transaction_count(self):
+        return self.transaction_set.all().count()
     
 class Transaction(models.Model):
     debitAccount = models.ForeignKey("Account", related_name="debits")
