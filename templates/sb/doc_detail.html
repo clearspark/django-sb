@@ -1,0 +1,33 @@
+{% extends "sb/app_site_glue.html" %}
+
+{% block mainContent %}
+
+<h2>{{doc}}</h2>
+
+<a href="{{doc.electronicCopy.url}}">Download File</a>
+
+<p>
+{{doc.comments}}
+</p>
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Debit account</th>
+            <th>Credit account</th>
+            <th>Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in doc.transactions.all %}
+            <tr>
+                <td>{{t.date}}</td>
+                <td>{{t.debitAccount.long_href|safe}}</td>
+                <td>{{t.creditAccount.long_href|safe}}</td>
+                <td>{{t.amount}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

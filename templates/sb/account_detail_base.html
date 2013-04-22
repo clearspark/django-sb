@@ -1,0 +1,55 @@
+<h2>{{account}}: {{account.pretty_balance}}</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Account</th>
+            <th>Doc</th>
+            <th>Ammount</th>
+            <th></th>
+            <th>Date</th>
+            <th>Account</th>
+            <th>Doc</th>
+            <th>Ammount</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in account.transactions %}
+            <tr>
+                {% if t.debitAccount = account %}
+                    <td>{{t.date}}</td>
+                    <td>{{t.creditAccount.href|safe}}</td>
+                    <td>{{t.sourceDocument.href|safe}}</td>
+                    <td>{{t.amount}}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                {% else %}
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>{{t.date}}</td>
+                    <td>{{t.debitAccount.href|safe}}</td>
+                    <td>{{t.sourceDocument.href|safe}}</td>
+                    <td>{{t.amount}}</td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>{{account.dt_sum}}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>{{account.ct_sum}}</td>
+        </tr>
+    </tbody>
+</table>
