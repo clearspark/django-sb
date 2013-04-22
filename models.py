@@ -7,6 +7,8 @@ class Account(models.Model):
     name = models.CharField(max_length=200)
     cat = models.CharField(max_length=200, choices=(("equity", "Equity"), ("negEq", "Negative equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense")))
     parent = models.ForeignKey("self", related_name="children", null=True, blank=True)
+    class Meta:
+        ordering = ["name"]
     def long_name(self):
         if self.parent:
             return self.parent.__unicode__()+" > "+self.name
@@ -20,7 +22,7 @@ class Account(models.Model):
     def __unicode__(self):
         return self.long_name()
     def transactions(self):
-        return Transaction.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).all()
+        return Transaction.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).order_by("date").all()
     def dt_sum(self):
         return sum(self.debits.all().values_list("amount", flat=True))
     def ct_sum(self):
@@ -55,7 +57,7 @@ class SourceDoc(models.Model):
     def __unicode__(self):
         return unicode(self.number)
     def transaction_count(self):
-        return self.transaction_set.all().count()
+        return self.transactions.all().count()
     def get_absolute_url(self):
         return reverse("doc-details", kwargs={"pk": self.pk})
     def href(self):
@@ -72,6 +74,6 @@ class Transaction(models.Model):
     comments = models.TextField(blank=True)
     isConfirmed = models.BooleanField()
     class Meta:
-        ordering = ["date"]
+        ordering = ["date", "recordedTime"]
     def __unicode__(self):
         return "{} {}:{} {}".format(self.date, self.debitAccount, self.creditAccount, self.amount)
