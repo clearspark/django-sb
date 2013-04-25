@@ -1,0 +1,12 @@
+
+td.currency {
+    text-align: right;
+    padding: 3.5px;
+}
+
+table.frame td {
+    border: 1px solid gray;
+}
+table.frame th {
+    border: 1px solid black;
+}

@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 # Create your models here.
 class Account(models.Model):
     name = models.CharField(max_length=200)
-    cat = models.CharField(max_length=200, choices=(("equity", "Equity"), ("negEq", "Negative equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense")))
+    cat = models.CharField(max_length=200, choices=(("equity", "Equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense")))
     parent = models.ForeignKey("self", related_name="children", null=True, blank=True)
     class Meta:
         ordering = ["name"]
@@ -62,6 +62,11 @@ class SourceDoc(models.Model):
         return reverse("doc-details", kwargs={"pk": self.pk})
     def href(self):
         return '<a href="%s">%s</a>' %(self.get_absolute_url(), self.number)
+    def has_file(self):
+        if self.electronicCopy:
+            return True
+        else:
+            return False
     
 class Transaction(models.Model):
     debitAccount = models.ForeignKey("Account", related_name="debits")
@@ -77,3 +82,8 @@ class Transaction(models.Model):
         ordering = ["date", "recordedTime"]
     def __unicode__(self):
         return "{} {}:{} {}".format(self.date, self.debitAccount, self.creditAccount, self.amount)
+    def date_href(self):
+        return '<a href="%s">%s</a>' %(self.get_absolute_url(), self.date)
+    def get_absolute_url(self):
+        return reverse("transaction-details", kwargs={"pk": self.pk})
+

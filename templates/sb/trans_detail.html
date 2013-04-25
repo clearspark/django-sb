@@ -1,0 +1,18 @@
+{% extends "sb/app_site_glue.html" %}
+
+{% block mainContent %}
+
+{% load humanize %}
+
+<h2>{{trans}}</h2>
+
+<p>Date: {{trans.date}}</p>
+<p>Amount: {{trans.amount|floatformat:2|intcomma}}</p>
+<p>Debit account: {{trans.debitAccount.long_href|safe}}</p>
+<p>Credit account: {{trans.creditAccount.long_href|safe}}</p>
+<p>Document: {{trans.sourceDocument.href|safe}}</p>
+<p>Comments:<br/>{{trans.comments}}</p>
+<p>Last edited: {{trans.recordedTime}}</p>
+<p>Edited by: {{trans.recordedBy.get_full_name}}</p>
+
+{% endblock %}

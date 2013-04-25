@@ -1,0 +1,10 @@
+{% load humanize %}
+
+{% for a in accounts %}
+    <tr>
+        <td>{{a.href|safe}}</td>
+        <td class="currency">{{a.dt_sum|floatformat:2|intcomma}}</td>
+        <td class="currency">{{a.ct_sum|floatformat:2|intcomma}}</td>
+        <td class="currency">{{a.balance|floatformat:2|intcomma}}</td>
+    </tr>
+{% endfor %}

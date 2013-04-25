@@ -1,0 +1,26 @@
+{% extends "sb/app_site_glue.html" %}
+
+{% block mainContent %}
+
+<h2>Document list</h2>
+
+<table class="frame">
+    <thead>
+        <tr>
+            <th>Doc</th>
+            <th>Tranaction count</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in docs %}
+            <tr>
+                <td>{{d.href|safe}}</td>
+                <td>{{d.transaction_count}}</td>
+                <td>{{d.comments}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

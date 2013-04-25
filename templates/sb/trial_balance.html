@@ -1,0 +1,29 @@
+{% extends "sb/app_site_glue.html" %}
+
+{% block mainContent %}
+
+    <h2>Accounts summary</h2>
+    <table class="frame">
+        <thead>
+            <tr>
+                <th>Account</th>
+                <th>Dt Total</th>
+                <th>Ct Total</th>
+                <th>Balance (dt positive)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><th colspan="4">Equity</th></tr>
+            {% include "sb/trial_balance_base.html" with accounts=equity_accounts %}
+            <tr><th colspan="4">Assets</th></tr>
+            {% include "sb/trial_balance_base.html" with accounts=asset_accounts %}
+            <tr><th colspan="4">Liabilities</th></tr>
+            {% include "sb/trial_balance_base.html" with accounts=liability_accounts %}
+            <tr><th colspan="4">Income</th></tr>
+            {% include "sb/trial_balance_base.html" with accounts=income_accounts %}
+            <tr><th colspan="4">Expenses</th></tr>
+            {% include "sb/trial_balance_base.html" with accounts=expense_accounts %}
+        </tbody>
+    </table>
+
+{% endblock %}

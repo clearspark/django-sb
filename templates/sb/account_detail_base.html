@@ -1,6 +1,8 @@
+{% load humanize %}
+
 <h2>{{account}}: {{account.pretty_balance}}</h2>
 
-<table>
+<table class="frame">
     <thead>
         <tr>
             <th>Date</th>
@@ -18,10 +20,10 @@
         {% for t in account.transactions %}
             <tr>
                 {% if t.debitAccount = account %}
-                    <td>{{t.date}}</td>
+                    <td>{{t.date_href|safe}}</td>
                     <td>{{t.creditAccount.href|safe}}</td>
                     <td>{{t.sourceDocument.href|safe}}</td>
-                    <td>{{t.amount}}</td>
+                    <td class="currency">{{t.amount|floatformat:2|intcomma}}</td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -33,10 +35,10 @@
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td>{{t.date}}</td>
+                    <td>{{t.date_href|safe}}</td>
                     <td>{{t.debitAccount.href|safe}}</td>
                     <td>{{t.sourceDocument.href|safe}}</td>
-                    <td>{{t.amount}}</td>
+                    <td class="currency">{{t.amount|floatformat:2|intcomma}}</td>
                 {% endif %}
             </tr>
         {% endfor %}
@@ -44,12 +46,12 @@
             <td></td>
             <td></td>
             <td></td>
-            <td>{{account.dt_sum}}</td>
+            <td class="currency">{{account.dt_sum|floatformat:2|intcomma}}</td>
             <td></td>
             <td></td>
             <td></td>
             <td></td>
-            <td>{{account.ct_sum}}</td>
+            <td class="currency">{{account.ct_sum|floatformat:2|intcomma}}</td>
         </tr>
     </tbody>
 </table>
