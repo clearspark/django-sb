@@ -1,12 +1,15 @@
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from csdjango.sb import models, forms
 # Create your views here.
 
+@login_required
 def account_list(request):
     accounts = models.Account.objects.all()
     return render(request, "sb/account_list.html", {"accounts": accounts})
 
+@login_required
 def account_details(request, pk):
     account = get_object_or_404(models.Account, pk=pk)
     #transactions = account.transactions()
@@ -28,18 +31,22 @@ def account_details(request, pk):
 
     return render(request, "sb/account_detail.html", {"account": account})
 
+@login_required
 def doc_list(request):
     docs = models.SourceDoc.objects.all()
     return render(request, "sb/doc_list.html", {"docs": docs})
 
+@login_required
 def doc_details(request, pk):
     doc = get_object_or_404(models.SourceDoc, pk=pk)
     return render(request, "sb/doc_detail.html", {"doc": doc})
 
+@login_required
 def trans_details(request, pk):
     trans = get_object_or_404(models.Transaction, pk=pk)
     return render(request, "sb/trans_detail.html", {"trans": trans})
 
+@login_required
 def trial_balance(request):
     accountDict = {
             "equity_accounts": models.Account.objects.filter(cat="equity").all(),
@@ -49,6 +56,7 @@ def trial_balance(request):
             "expense_accounts": models.Account.objects.filter(cat="expense").all()}
     return render(request, "sb/trial_balance.html", accountDict)
 
+@login_required
 def add_payslip(request):
     if request.method == "GET":
         pform = forms.PaySlipForm()

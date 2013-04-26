@@ -4,6 +4,12 @@
 <link href="{{STATIC_URL}}sb/sb.css" rel="stylesheet" type="text/css"/>
 {% endblock %}
 
+{% block appMenu %}
+    <ul>
+        <li><a href='{% url trialbalance %}'>Accounts summary</a></li>
+    </ul>
+{% endblock %}
+
 {% block mainContent %}
 
 {% endblock %}
