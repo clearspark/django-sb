@@ -48,7 +48,11 @@ def trans_details(request, pk):
 
 @login_required
 def trial_balance(request):
+    begin = request.GET.get('begin', None)
+    end = request.GET.get('end', None)
     accountDict = {
+            'begin': begin,
+            'end': end,
             "equity_accounts": models.Account.objects.filter(cat="equity").all(),
             "asset_accounts":  models.Account.objects.filter(cat="asset").all(),
             "liability_accounts": models.Account.objects.filter(cat="liability").all(),

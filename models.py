@@ -23,10 +23,20 @@ class Account(models.Model):
         return self.long_name()
     def transactions(self):
         return Transaction.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).order_by("date").all()
-    def dt_sum(self):
-        return sum(self.debits.all().values_list("amount", flat=True))
-    def ct_sum(self):
-        return sum(self.credits.all().values_list("amount", flat=True))
+    def dt_sum(self, begin=None, end=None):
+        debits = self.debits
+        if begin is not None:
+            debits = debits.filter(date__gte = begin)
+        if end is not None:
+            debits = debits.filter(date__lte = end)
+        return sum(debits.all().values_list("amount", flat=True))
+    def ct_sum(self, begin=None, end=None):
+        credits = self.credits
+        if begin is not None:
+            credits = credits.filter(date__gte = begin)
+        if end is not None:
+            credits = credits.filter(date__lte = end)
+        return sum(credits.all().values_list("amount", flat=True))
     def balance(self):
         return self.dt_sum() - self.ct_sum()
     def pretty_balance(self):
