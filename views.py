@@ -11,25 +11,14 @@ def account_list(request):
 
 @login_required
 def account_details(request, pk):
+    dateform = forms.DateRangeFilter(request.GET)
+    begin, end = dateform.get_range()
     account = get_object_or_404(models.Account, pk=pk)
-    #transactions = account.transactions()
-    #class AccountMonth(object):
-    #    def __init__(self, nr):
-    #        self.nr = nr
-    #        self.transactions = []
-    #        self.dt_total = 0.0
-    #        self.ct_total = 0.0
-    #months = []
-    #month = 0
-    #for t in transactions:
-    #    if t.date.month != month:
-    #        curMonth = AccountMonth(t.date.month)
-    #        months.append(curMonth)
-    #    curMonth.transactions.append(t)
-    #    if t.debitAccount = 
-
-
-    return render(request, "sb/account_detail.html", {"account": account})
+    account.period_transactions = account.get_transactions(begin, end)
+    account.period_dt_sum = account.dt_sum(begin, end)
+    account.period_ct_sum = account.ct_sum(begin, end)
+    account.period_balance = account.pretty_balance(begin, end)
+    return render(request, "sb/account_detail.html", {"account": account, 'dateform': dateform})
 
 @login_required
 def doc_list(request):
@@ -48,16 +37,18 @@ def trans_details(request, pk):
 
 @login_required
 def trial_balance(request):
-    begin = request.GET.get('begin', None)
-    end = request.GET.get('end', None)
+    dateform = forms.DateRangeFilter(request.GET)
+    begin, end = dateform.get_range()
+    def annotate(cat):
+        accounts = list(models.Account.objects.filter(cat=cat).all())
+        for a in accounts:
+            a.period_dt_sum = a.dt_sum(begin, end)
+            a.period_ct_sum = a.ct_sum(begin, end)
+            a.period_balance = a.balance(begin, end)
+        return accounts
     accountDict = {
-            'begin': begin,
-            'end': end,
-            "equity_accounts": models.Account.objects.filter(cat="equity").all(),
-            "asset_accounts":  models.Account.objects.filter(cat="asset").all(),
-            "liability_accounts": models.Account.objects.filter(cat="liability").all(),
-            "income_accounts": models.Account.objects.filter(cat="income").all(),
-            "expense_accounts": models.Account.objects.filter(cat="expense").all()}
+            "account_groups": [ {'cat': cat[1], 'accounts': annotate(cat[0])} for cat in models.ACCOUNT_CATEGORIES],
+            'dateform': dateform}
     return render(request, "sb/trial_balance.html", accountDict)
 
 @login_required

@@ -3,6 +3,7 @@
 {% block mainContent %}
 
     <h2>Accounts summary</h2>
+    {% include "sb/datefilter.html" with datefilter=datefilter %}
     <table class="frame">
         <thead>
             <tr>
@@ -13,16 +14,10 @@
             </tr>
         </thead>
         <tbody>
-            <tr><th colspan="4">Equity</th></tr>
-            {% include "sb/trial_balance_base.html" with accounts=equity_accounts %}
-            <tr><th colspan="4">Assets</th></tr>
-            {% include "sb/trial_balance_base.html" with accounts=asset_accounts %}
-            <tr><th colspan="4">Liabilities</th></tr>
-            {% include "sb/trial_balance_base.html" with accounts=liability_accounts %}
-            <tr><th colspan="4">Income</th></tr>
-            {% include "sb/trial_balance_base.html" with accounts=income_accounts %}
-            <tr><th colspan="4">Expenses</th></tr>
-            {% include "sb/trial_balance_base.html" with accounts=expense_accounts %}
+            {% for group in account_groups %}
+            <tr><th colspan="4">{{group.cat}}</th></tr>
+                {% include "sb/trial_balance_base.html" with accounts=group.accounts %}
+            {% endfor %}
         </tbody>
     </table>
 

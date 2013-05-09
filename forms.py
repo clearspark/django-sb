@@ -13,3 +13,12 @@ class SourceDocForm(forms.ModelForm):
     class Meta:
         model = models.SourceDoc
 
+class DateRangeFilter(forms.Form):
+    begin = forms.DateField(required=False)
+    end = forms.DateField(required=False)
+
+    def get_range(self):
+        if self.is_valid():
+            return self.cleaned_data.get('begin', None), self.cleaned_data.get('end', None)
+        else:
+            return None, None

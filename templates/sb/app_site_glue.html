@@ -1,13 +1,11 @@
 {% extends "sb/base.html" %}
 
 {% block appHead %}
-<link href="{{STATIC_URL}}sb/sb.css" rel="stylesheet" type="text/css"/>
+    <link href="{{STATIC_URL}}sb/sb.css" rel="stylesheet" type="text/css"/>
 {% endblock %}
 
 {% block appMenu %}
-    <ul>
-        <li><a href='{% url trialbalance %}'>Accounts summary</a></li>
-    </ul>
+    {% include "sb/app_menu.html" %}
 {% endblock %}
 
 {% block mainContent %}

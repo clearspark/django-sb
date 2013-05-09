@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<h2>{{account}}: {{account.pretty_balance}}</h2>
+<h2>{{account}}: {{account.period_balance}}</h2>
 
 <table class="frame">
     <thead>
@@ -17,7 +17,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for t in account.transactions %}
+        {% for t in account.period_transactions %}
             <tr>
                 {% if t.debitAccount = account %}
                     <td>{{t.date_href|safe}}</td>
@@ -46,12 +46,12 @@
             <td></td>
             <td></td>
             <td></td>
-            <td class="currency">{{account.dt_sum|floatformat:2|intcomma}}</td>
+            <td class="currency">{{account.period_dt_sum|floatformat:2|intcomma}}</td>
             <td></td>
             <td></td>
             <td></td>
             <td></td>
-            <td class="currency">{{account.ct_sum|floatformat:2|intcomma}}</td>
+            <td class="currency">{{account.period_ct_sum|floatformat:2|intcomma}}</td>
         </tr>
     </tbody>
 </table>

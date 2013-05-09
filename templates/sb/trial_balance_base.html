@@ -3,8 +3,8 @@
 {% for a in accounts %}
     <tr>
         <td>{{a.href|safe}}</td>
-        <td class="currency">{{a.dt_sum|floatformat:2|intcomma}}</td>
-        <td class="currency">{{a.ct_sum|floatformat:2|intcomma}}</td>
-        <td class="currency">{{a.balance|floatformat:2|intcomma}}</td>
+        <td class="currency">{{a.period_dt_sum|floatformat:2|intcomma}}</td>
+        <td class="currency">{{a.period_ct_sum|floatformat:2|intcomma}}</td>
+        <td class="currency">{{a.period_balance|floatformat:2|intcomma}}</td>
     </tr>
 {% endfor %}
