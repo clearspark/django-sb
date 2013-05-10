@@ -36,6 +36,17 @@ def trans_details(request, pk):
     return render(request, "sb/trans_detail.html", {"trans": trans})
 
 @login_required
+def trans_list(request):
+    dateform = forms.DateRangeFilter(request.GET)
+    begin, end = dateform.get_range()
+    transactions = models.Transaction.objects.all()
+    if begin is not None:
+        transactions = transactions.filter(date__gte=begin)
+    if end is not None:
+        transactions = transactions.filter(date__lte=end)
+    return render(request, "sb/trans_list.html", {"transactions": transactions, 'dateform': dateform})
+
+@login_required
 def trial_balance(request):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()

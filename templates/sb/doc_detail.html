@@ -2,8 +2,6 @@
 
 {% block mainContent %}
 
-{% load humanize %}
-
 <h2>{{doc}}</h2>
 
 <a href="{{doc.electronicCopy.url}}">Download File</a>
@@ -11,27 +9,6 @@
 <p>
 {{doc.comments}}
 </p>
-<table>
-    <thead>
-        <tr>
-            <th>Date</th>
-            <th>Debit account</th>
-            <th>Credit account</th>
-            <th>Amount</th>
-            <th>Comments</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for t in doc.transactions.all %}
-            <tr>
-                <td>{{t.date_href|safe}}</td>
-                <td>{{t.debitAccount.long_href|safe}}</td>
-                <td>{{t.creditAccount.long_href|safe}}</td>
-                <td class="currency">{{t.amount|floatformat:2|intcomma}}</td>
-                <td>{{t.comments}}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% include 'sb/transaction_table.html' with transactions=doc.transactions.all %}
 
 {% endblock %}

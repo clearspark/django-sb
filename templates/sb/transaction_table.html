@@ -1,0 +1,23 @@
+{% load humanize %}
+<table class='frame'>
+    <thead>
+        <tr>
+            <th width='6em'>Date</th>
+            <th>Debit account</th>
+            <th>Credit account</th>
+            <th>Amount</th>
+            <th>Comments</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in transactions %}
+            <tr>
+                <td width='6em'>{{t.date_href|safe}}</td>
+                <td>{{t.debitAccount.long_href|safe}}</td>
+                <td>{{t.creditAccount.long_href|safe}}</td>
+                <td class="currency">{{t.amount|floatformat:2|intcomma}}</td>
+                <td>{{t.comments}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
