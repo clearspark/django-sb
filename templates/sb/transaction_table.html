@@ -7,6 +7,7 @@
             <th>Credit account</th>
             <th>Amount</th>
             <th>Comments</th>
+            {% if not no_doc %}<th>Document</th>{% endif %}
         </tr>
     </thead>
     <tbody>
@@ -17,6 +18,7 @@
                 <td>{{t.creditAccount.long_href|safe}}</td>
                 <td class="currency">{{t.amount|floatformat:2|intcomma}}</td>
                 <td>{{t.comments}}</td>
+                {% if not no_doc %}<td>{{t.sourceDocument.href|safe}}</td>{% endif %}
             </tr>
         {% endfor %}
     </tbody>
