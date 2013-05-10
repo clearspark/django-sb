@@ -64,6 +64,8 @@ def trial_balance(request):
 
 @login_required
 def add_payslip(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied("Only super-users can add payslips")
     if request.method == "GET":
         pform = forms.PaySlipForm()
         dform = forms.SourceDocForm()
