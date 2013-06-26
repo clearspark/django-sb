@@ -4,6 +4,9 @@ from django.contrib.auth.decorators import login_required
 from csdjango.sb import models, forms
 # Create your views here.
 
+def accounts_sum(accounts):
+    return sum([a.balance() for a in accounts])
+
 @login_required
 def account_list(request):
     accounts = models.Account.objects.all()
@@ -22,7 +25,8 @@ def account_details(request, pk):
 
 @login_required
 def doc_list(request):
-    docs = models.SourceDoc.objects.all()
+    from django.db.models import Min, Max
+    docs = models.SourceDoc.objects.annotate(min_date=Min("transactions__date")).annotate(max_date=Max("transactions__date")).all()
     return render(request, "sb/doc_list.html", {"docs": docs})
 
 @login_required
@@ -125,3 +129,16 @@ def add_payslip(request):
             return redirect(employee)
     return render(request, "sb/payslip_form.html", {'pform': pform, 'dform': dform})
       
+@login_required
+def income_statement(request):
+    salesIncomeAccounts = models.Account.objects.filter(name="sales").all()
+    salesIncomeSum = - accounts_sum(salesIncomeAccounts)
+    sales = {"name": "Normal income", "accounts": salesIncomeAccounts, "sum": salesIncomeSum}
+    otherIncomeAccounts = models.Account.objects.exclude(name="Sales").filter(cat="income").all()
+    otherIncomeSum = - accounts_sum(otherIncomeAccounts)
+    other = {"name": "Other income", "accounts": otherIncomeAccounts, "sum": otherIncomeSum}
+    expenseAccounts = models.Account.objects.filter(cat="expense").all()
+    expenseSum = - accounts_sum(expenseAccounts)
+    expenses = {"name": "Expenses", "accounts": expenseAccounts, "sum": expenseSum}
+    totalSum = salesIncomeSum + otherIncomeSum + expenseSum
+    return render(request, "sb/income_statement.html", {"cats":[sales, other, expenses], "net": totalSum})

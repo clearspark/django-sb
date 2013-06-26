@@ -51,10 +51,12 @@ class Account(models.Model):
         return sum(self.get_credits(*args, **kwargs).all().values_list("amount", flat=True))
     def balance(self, *args, **kwargs):
         return self.dt_sum(*args, **kwargs) - self.ct_sum(*args, **kwargs)
+    def ct_balance(self):
+        return -self.balance()
     def pretty_balance(self, *args, **kwargs):
         balance = self.balance(*args, **kwargs)
         if balance >= 0:
-            return "Dr {}".format(balance)
+            return "Dt {}".format(balance)
         else:
             return "Cr {}".format(-balance)
     def dt_count(self, *args, **kwargs):
@@ -69,7 +71,7 @@ class Account(models.Model):
         return '<a href="%s">%s</a>' %(self.get_absolute_url(), self.name)
 
 def source_doc_file_path(instance, filename):
-    return "sb/{}/{}".format(instance.number, filename)
+    return "sb/src_docs/{}/{}".format(instance.number, filename)
 class SourceDoc(models.Model):
     number = models.CharField(max_length=40, unique=True)
     electronicCopy = models.FileField(upload_to=source_doc_file_path, blank=True, null=True)
@@ -108,4 +110,24 @@ class Transaction(models.Model):
         return '<a href="%s">%s</a>' %(self.get_absolute_url(), self.date)
     def get_absolute_url(self):
         return reverse("transaction-details", kwargs={"pk": self.pk})
+
+def asset_image_file_path(instance, filename):
+    return "sb/assets/{}/{}".format(instance.number, filename)
+class Asset(models.Model):
+    number = models.CharField(max_length=20, unique=True)
+    description = models.TextField()
+    location = models.TextField()
+    image = models.FileField("Optional: photo of asset", upload_to=asset_image_file_path, blank=True, null=True)
+    cost = models.DecimalField(max_digits=16, decimal_places=2)
+    accDepreciation = models.DecimalField(max_digits=16, decimal_places=2)
+    carryingValue = models.DecimalField(max_digits=16, decimal_places=2)
+    acquisitionTransaction = models.ForeignKey('Transaction')
+    usefulLife = models.IntegerField("Usefull lifespan in months")
+    category = models.CharField("Asset category", max_length=50, choices=(('land', 'Land'), ('equipment', 'Equipment')))
+    residualValue = models.DecimalField(max_digits=16, decimal_places=2,
+            help_text="Estimated resale value of asset in current condition on current date.")
+    disposalDate = models.DateField(null=True, blank=True)
+    disposalValue = models.DecimalField(max_digits=16, decimal_places=2)
+    
+
 

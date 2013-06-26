@@ -1,6 +1,7 @@
 {% extends "sb/app_site_glue.html" %}
 
 {% block mainContent %}
+    <h1>Adding new payslip</h2>
     <form action="" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{dform.as_p}}

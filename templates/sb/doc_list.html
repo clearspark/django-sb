@@ -2,25 +2,31 @@
 
 {% block mainContent %}
 
-<h2>Document list</h2>
+    <h1>Document list</h1>
 
-<table class="frame">
-    <thead>
-        <tr>
-            <th>Doc</th>
-            <th>Tranaction count</th>
-            <th>Comments</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for d in docs %}
+    <p class="info">Click headers to sort.</p>
+
+    <table class="frame sortable">
+        <thead>
             <tr>
-                <td>{{d.href|safe}}</td>
-                <td>{{d.transaction_count}}</td>
-                <td>{{d.comments}}</td>
+                <th>Doc</th>
+                <th>First transaction</th>
+                <th>Last transaction</th>
+                <th>Tranaction count</th>
+                <th>Comments</th>
             </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
+        </thead>
+        <tbody>
+            {% for d in docs %}
+                <tr>
+                    <td>{{d.href|safe}}</td>
+                    <td>{{d.min_date}}</td>
+                    <td>{{d.max_date}}</td>
+                    <td>{{d.transaction_count}}</td>
+                    <td>{{d.comments}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
 {% endblock %}

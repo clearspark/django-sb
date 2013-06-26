@@ -1,0 +1,29 @@
+{% extends "sb/app_site_glue.html" %}
+
+{% block mainContent %}
+
+    {% load humanize %}
+    <h1>Income Statement</h1>
+    <table class="frame">
+        {% for cat in cats %}
+            <tr>
+                <th>{{cat.name}}</th>
+                <td></td>
+                <th>{{cat.sum|floatformat:2|intcomma}}</th>
+            </tr>
+            {% for a in cat.accounts %}
+                <tr>
+                    <td>{{a}}</td>
+                    <td>{{a.ct_balance|floatformat:2|intcomma}}</td>
+                    <td></td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+        <tr>
+            <th>Nett profit</th>
+            <td></td>
+            <th>{{net|floatformat:2|intcomma}}</td>
+        </tr>
+    </table>
+
+{% endblock %}

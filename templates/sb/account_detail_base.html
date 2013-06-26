@@ -1,7 +1,5 @@
 {% load humanize %}
 
-<h2>{{account}}: {{account.period_balance}}</h2>
-
 <table class="frame">
     <thead>
         <tr>
@@ -17,6 +15,17 @@
         </tr>
     </thead>
     <tbody>
+        <tr>
+            <td></td>
+            <td>Total</td>
+            <td></td>
+            <td class="currency">{{account.period_dt_sum|floatformat:2|intcomma}}</td>
+            <td></td>
+            <td></td>
+            <td>Total</td>
+            <td></td>
+            <td class="currency">{{account.period_ct_sum|floatformat:2|intcomma}}</td>
+        </tr>
         {% for t in account.period_transactions %}
             <tr>
                 {% if t.debitAccount = account %}
@@ -44,12 +53,12 @@
         {% endfor %}
         <tr>
             <td></td>
-            <td></td>
+            <td>Total</td>
             <td></td>
             <td class="currency">{{account.period_dt_sum|floatformat:2|intcomma}}</td>
             <td></td>
             <td></td>
-            <td></td>
+            <td>Total</td>
             <td></td>
             <td class="currency">{{account.period_ct_sum|floatformat:2|intcomma}}</td>
         </tr>

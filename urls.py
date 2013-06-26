@@ -10,5 +10,6 @@ urlpatterns = patterns('csdjango.sb.views',
     url(r'^doc/list/?$', 'doc_list', name='doc-list'),
     url(r'^accounts_summary/?$', 'trial_balance', name='trialbalance'),
     url(r'^add_payslip/?$', 'add_payslip', name='add-payslip'),
+    url(r'^statements/income/?$', 'income_statement', name='income-statement'),
 
 )

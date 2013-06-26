@@ -36,3 +36,4 @@ class AccountAdmin(admin.ModelAdmin):
 admin.site.register(models.Account, AccountAdmin)
 admin.site.register(models.Transaction, TransactionAdmin)
 admin.site.register(models.SourceDoc, SourceDocAdmin)
+admin.site.register(models.Asset)

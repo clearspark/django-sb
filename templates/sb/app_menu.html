@@ -1,5 +1,11 @@
 <ul>
-    <li><a href='{% url trialbalance %}'>Accounts summary</a></li>
+    <li><a href='#'>Sumaries</a>
+        <ul>
+            <li><a href='{% url trialbalance %}'>Accounts summary</a></li>
+            <li><a href='{% url income-statement %}'>Income statement</a></li>
+        </ul>
+    </li>
     <li><a href='{% url add-payslip %}'>Add payslip</a></li>
     <li><a href='{% url transaction-list %}'>Transaction list</a></li>
+    <li><a href='{% url doc-list %}'>Document list</a></li>
 </ul>
