@@ -103,7 +103,7 @@ def add_payslip(request):
             sars = models.Account.objects.get(name="SARS")
             bonusses = models.Account.objects.get(name="Bonusses")
             #generate transactions
-            if payeAmount > 0.00:
+            if payeAmount:
                 #Increace employee account with paye ammount
                 models.Transaction(debitAccount=paye, creditAccount=employee,
                         amount=payeAmount, date=date, recordedBy=request.user,
@@ -112,7 +112,9 @@ def add_payslip(request):
                 models.Transaction(debitAccount=employee, creditAccount=sars,
                         amount=payeAmount, date=date, recordedBy=request.user,
                         sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
-            if uifAmount is not None:
+            else:
+                payeAmount = Decimal(0.0)
+            if uifAmount:
                 #Increace employee account with paye ammount
                 models.Transaction(debitAccount=uif, creditAccount=employee,
                         amount=uifAmount, date=date, recordedBy=request.user,
@@ -129,7 +131,7 @@ def add_payslip(request):
                     amount=nett, date=date, recordedBy=request.user,
                     sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
             #Increace employee account with bonus amount
-            if bonusAmount is not None:
+            if bonusAmount:
                 models.Transaction(debitAccount=bonusses, creditAccount=employee,
                         amount=bonusAmount, date=date, recordedBy=request.user,
                         sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
@@ -138,7 +140,7 @@ def add_payslip(request):
                         creditAccount=employee, amount=rform.cleaned_data['amount'],
                         date=date, recordedBy=request.user, sourceDocument=sourceDoc,
                         comments="", isConfirmed = True).save()
-            return redirect(employee)
+            return redirect(sourceDoc)
     return render(request, "sb/payslip_form.html", 
             {'pform': pform, 'dform': dform, 'rforms': rforms})
       
