@@ -56,7 +56,7 @@ class Account(models.Model):
     def pretty_balance(self, *args, **kwargs):
         balance = self.balance(*args, **kwargs)
         if balance >= 0:
-            return "Dt {}".format(balance)
+            return "Dr {}".format(balance)
         else:
             return "Cr {}".format(-balance)
     def dt_count(self, *args, **kwargs):
