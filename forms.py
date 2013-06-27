@@ -1,4 +1,5 @@
 from django import forms
+from django.forms.formsets import formset_factory
 from csdjango.sb import models
 
 class PaySlipForm(forms.Form):
@@ -8,6 +9,12 @@ class PaySlipForm(forms.Form):
     paye = forms.DecimalField(decimal_places=2)
     uif = forms.DecimalField(decimal_places=2, required=False)
     bonus = forms.DecimalField(decimal_places=2, required=False)
+
+class ReimbursementForm(forms.Form):
+    amount = forms.DecimalField(decimal_places=2, required=False)
+    account = forms.ModelChoiceField(models.Account.objects.all())
+
+ReimbursementFormSet = formset_factory(ReimbursementForm, extra=1)
 
 class SourceDocForm(forms.ModelForm):
     class Meta:

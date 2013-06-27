@@ -10,7 +10,8 @@ def accounts_sum(accounts):
 @login_required
 def account_list(request):
     accounts = models.Account.objects.all()
-    return render(request, "sb/account_list.html", {"accounts": accounts})
+    return render(request, "sb/account_list.html",
+            {"accounts": accounts})
 
 @login_required
 def account_details(request, pk):
@@ -21,12 +22,14 @@ def account_details(request, pk):
     account.period_dt_sum = account.dt_sum(begin, end)
     account.period_ct_sum = account.ct_sum(begin, end)
     account.period_balance = account.pretty_balance(begin, end)
-    return render(request, "sb/account_detail.html", {"account": account, 'dateform': dateform})
+    return render(request, "sb/account_detail.html", 
+            {"account": account, 'dateform': dateform})
 
 @login_required
 def doc_list(request):
     from django.db.models import Min, Max
-    docs = models.SourceDoc.objects.annotate(min_date=Min("transactions__date")).annotate(max_date=Max("transactions__date")).all()
+    docs = models.SourceDoc.objects.annotate(min_date=Min("transactions__date"))
+    docs = docs.annotate(max_date=Max("transactions__date")).all()
     return render(request, "sb/doc_list.html", {"docs": docs})
 
 @login_required
@@ -48,7 +51,8 @@ def trans_list(request):
         transactions = transactions.filter(date__gte=begin)
     if end is not None:
         transactions = transactions.filter(date__lte=end)
-    return render(request, "sb/trans_list.html", {"transactions": transactions, 'dateform': dateform})
+    return render(request, "sb/trans_list.html",
+            {"transactions": transactions, 'dateform': dateform})
 
 @login_required
 def trial_balance(request):
@@ -62,7 +66,8 @@ def trial_balance(request):
             a.period_balance = a.balance(begin, end)
         return accounts
     accountDict = {
-            "account_groups": [ {'cat': cat[1], 'accounts': annotate(cat[0])} for cat in models.ACCOUNT_CATEGORIES],
+            "account_groups": [ {'cat': cat[1], 'accounts': annotate(cat[0])}
+                for cat in models.ACCOUNT_CATEGORIES],
             'dateform': dateform}
     return render(request, "sb/trial_balance.html", accountDict)
 
@@ -73,10 +78,12 @@ def add_payslip(request):
     if request.method == "GET":
         pform = forms.PaySlipForm()
         dform = forms.SourceDocForm()
+        rforms = forms.ReimbursementFormSet()
     elif request.method == "POST":
         pform = forms.PaySlipForm(request.POST)
         dform = forms.SourceDocForm(request.POST, request.FILES)
-        if pform.is_valid() and dform.is_valid():
+        rforms = forms.ReimbursementFormSet(request.POST)
+        if pform.is_valid() and dform.is_valid() and rforms.is_valid():
             #Read data
             sourceDoc = dform.save(commit=False)
             sourceDoc.recordedBy=request.user
@@ -126,8 +133,14 @@ def add_payslip(request):
                 models.Transaction(debitAccount=bonusses, creditAccount=employee,
                         amount=bonusAmount, date=date, recordedBy=request.user,
                         sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+            for rform in rforms:
+                models.Transaction(debitAccount=rform.cleaned_data['account'],
+                        creditAccount=employee, amount=rform.cleaned_data['amount'],
+                        date=date, recordedBy=request.user, sourceDocument=sourceDoc,
+                        comments="", isConfirmed = True).save()
             return redirect(employee)
-    return render(request, "sb/payslip_form.html", {'pform': pform, 'dform': dform})
+    return render(request, "sb/payslip_form.html", 
+            {'pform': pform, 'dform': dform, 'rforms': rforms})
       
 @login_required
 def income_statement(request):

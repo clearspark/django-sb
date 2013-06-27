@@ -61,7 +61,7 @@ class Account(models.Model):
             return "Cr {}".format(-balance)
     def dt_count(self, *args, **kwargs):
         return self.get_debits(*args, **kwargs).all().count()
-    def ct_count(self, begin=None, end=None):
+    def ct_count(self, *args, **kwargs):
         return self.get_credits(*args, **kwargs).all().count()
     def t_count(self, *args, **kwargs):
         return self.get_transactions(*args, **kwargs).count()
