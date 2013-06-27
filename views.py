@@ -65,10 +65,11 @@ def trial_balance(request):
             a.period_ct_sum = a.ct_sum(begin, end)
             a.period_balance = a.balance(begin, end)
         return accounts
-    accountDict = {
-            "account_groups": [ {'cat': cat[1], 'accounts': annotate(cat[0])}
-                for cat in models.ACCOUNT_CATEGORIES],
-            'dateform': dateform}
+    accGroups = [ {'cat': cat[1], 'accounts': annotate(cat[0])}
+                for cat in models.ACCOUNT_CATEGORIES]
+    for g in accGroups:
+        g['total'] = accounts_sum(g['accounts'])
+    accountDict = {"account_groups": accGroups, 'dateform': dateform}
     return render(request, "sb/trial_balance.html", accountDict)
 
 @login_required

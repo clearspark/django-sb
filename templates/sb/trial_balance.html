@@ -2,6 +2,7 @@
 
 {% block mainContent %}
 
+    {% load humanize %}
     <h1>Accounts summary</h1>
     {% include "sb/datefilter.html" with datefilter=datefilter %}
     <table class="frame">
@@ -15,7 +16,7 @@
         </thead>
         <tbody>
             {% for group in account_groups %}
-            <tr><th colspan="4">{{group.cat}}</th></tr>
+            <tr><th colspan="3">{{group.cat}}</th><th>{{group.total|floatformat:2|intcomma}}</tr>
                 {% include "sb/trial_balance_base.html" with accounts=group.accounts %}
             {% endfor %}
         </tbody>
