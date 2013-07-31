@@ -1,5 +1,9 @@
+import csv
+import datetime
+
 from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import Http404, HttpResponse
 from django.contrib.auth.decorators import login_required
 from csdjango.sb import models, forms
 # Create your views here.
@@ -49,10 +53,12 @@ def trans_list(request):
     transactions = models.Transaction.objects.all()
     if begin is not None:
         transactions = transactions.filter(date__gte=begin)
+        begin = begin.isoformat()
     if end is not None:
         transactions = transactions.filter(date__lte=end)
+        end = end.isoformat()
     return render(request, "sb/trans_list.html",
-            {"transactions": transactions, 'dateform': dateform})
+            {"transactions": transactions, 'dateform': dateform, 'begin': begin, 'end': end})
 
 @login_required
 def trial_balance(request):
@@ -158,3 +164,29 @@ def income_statement(request):
     expenses = {"name": "Expenses", "accounts": expenseAccounts, "sum": expenseSum}
     totalSum = salesIncomeSum + otherIncomeSum + expenseSum
     return render(request, "sb/income_statement.html", {"cats":[sales, other, expenses], "net": totalSum})
+
+@login_required
+def extract(request, dataType):
+    dateform = forms.DateRangeFilter(request.GET)
+    print request.GET
+    begin, end = dateform.get_range()
+    print begin, end
+    dataTypes = ('transactions',)
+    if dataType not in dataTypes:
+        raise Http404
+    if dataType == 'transactions':
+        transactions = models.Transaction.objects.order_by('date')
+        if begin:
+            transactions = transactions.filter(date__gte=begin)
+        if end:
+            transactions = transactions.filter(date__lte=end)
+        transactions = transactions.all()
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="Transaction_%s.csv"' %datetime.date.today().isoformat()
+        writer = csv.writer(response, dialect='excel')
+        writer.writerow(['Date', 'Debit account', 'Credit account', 'Amount', 'Comment', 'Document'])
+        for t in transactions:
+            writer.writerow( [t.date, t.debitAccount.long_name(), t.creditAccount.long_name(), t.amount, t.comments, t.sourceDocument.number if t.sourceDocument else ''] )
+        return response
+
+
