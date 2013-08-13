@@ -168,10 +168,8 @@ def income_statement(request):
 @login_required
 def extract(request, dataType):
     dateform = forms.DateRangeFilter(request.GET)
-    print request.GET
     begin, end = dateform.get_range()
-    print begin, end
-    dataTypes = ('transactions',)
+    dataTypes = ('transactions','trial balance')
     if dataType not in dataTypes:
         raise Http404
     if dataType == 'transactions':
@@ -188,5 +186,26 @@ def extract(request, dataType):
         for t in transactions:
             writer.writerow( [t.date, t.debitAccount.long_name(), t.creditAccount.long_name(), t.amount, t.comments, t.sourceDocument.number if t.sourceDocument else ''] )
         return response
+    if dataType == 'trial balance':
+        def annotate(cat):
+            accounts = list(models.Account.objects.filter(cat=cat).all())
+            for a in accounts:
+                a.period_dt_sum = a.dt_sum(begin, end)
+                a.period_ct_sum = a.ct_sum(begin, end)
+                a.period_balance = a.balance(begin, end)
+            return accounts
+        accGroups = [ {'cat': cat[1], 'accounts': annotate(cat[0])}
+                    for cat in models.ACCOUNT_CATEGORIES]
+        for g in accGroups:
+            g['total'] = sum([ a.period_balance for a in g['accounts']])
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="Trial_balance_%s.csv"' %datetime.date.today().isoformat()
+        writer = csv.writer(response, dialect='excel')
+        writer.writerow(['Account name', 'Debit total', 'Credit total', 'Balance'])
+        for cat in accGroups:
+            for a in cat['accounts']:
+                writer.writerow( [a.long_name(), a.period_dt_sum, a.period_ct_sum, a.period_balance] )
+        return response
+
 
 

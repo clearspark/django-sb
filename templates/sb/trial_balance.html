@@ -5,6 +5,9 @@
     {% load humanize %}
     <h1>Accounts summary</h1>
     {% include "sb/datefilter.html" with datefilter=datefilter %}
+    <h3>
+        <a href='{% url extract dataType='trial balance' %}?begin={{begin|default:''}}&end={{end|default:''}}'>Click to Download currently displayed data in CSV format</a>
+    </h3>
     <table class="frame">
         <thead>
             <tr>
