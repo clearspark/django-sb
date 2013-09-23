@@ -78,6 +78,13 @@ class SourceDoc(models.Model):
     recordedTime = models.DateTimeField(auto_now=True)
     recordedBy = models.ForeignKey("auth.User", editable=False)
     comments = models.TextField(blank=True)
+    docType = models.CharField(max_length=20, choices=(
+        ('bank-statement', 'Bank statement'),
+        ('invoice-out', 'Outbound invoice'),
+        ('invoice-in', 'Inbound invoice'),
+        ('payslip', 'Payslip'),
+        ('other', 'Other')),
+        help_text='The type of document being recorded/created')
     def __unicode__(self):
         return unicode(self.number)
     def transaction_count(self):
@@ -91,7 +98,19 @@ class SourceDoc(models.Model):
             return True
         else:
             return False
-    
+def get_new_invoice_nr():
+    invoices = SourceDoc.objects.filter(docType='invoice-out').order_by('-recordedTime').all()
+    if not invoices:
+        nr = 1
+    else:
+        nr_string = invoices[0].number
+        print nr_string
+        nr_string = ''.join( [ c for c in nr_string if c in '1234567890' ])
+        print nr_string
+        nr = int(nr_string) + 1
+        print nr
+    return 'CS' + str(nr)
+
 class Transaction(models.Model):
     debitAccount = models.ForeignKey("Account", related_name="debits")
     creditAccount = models.ForeignKey("Account", related_name="credits")

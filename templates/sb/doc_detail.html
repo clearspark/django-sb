@@ -4,7 +4,9 @@
 
 <h2>{{doc}}</h2>
 
-<a href="{{doc.electronicCopy.url}}">Download File</a>
+{% if doc.electronicCopy %}
+    <a href="{{doc.electronicCopy.url}}">Download File</a>
+{% endif %}
 
 <p>
 {{doc.comments}}

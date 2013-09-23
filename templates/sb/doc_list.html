@@ -20,8 +20,8 @@
             {% for d in docs %}
                 <tr>
                     <td>{{d.href|safe}}</td>
-                    <td>{{d.min_date}}</td>
-                    <td>{{d.max_date}}</td>
+                    <td>{{d.min_date.isoformat}}</td>
+                    <td>{{d.max_date.isoformat}}</td>
                     <td>{{d.transaction_count}}</td>
                     <td>{{d.comments}}</td>
                 </tr>

@@ -150,6 +150,47 @@ def add_payslip(request):
             return redirect(sourceDoc)
     return render(request, "sb/payslip_form.html", 
             {'pform': pform, 'dform': dform, 'rforms': rforms})
+import decimal
+@login_required
+def send_invoice(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied("Only super-users can add payslips")
+    if request.method == "GET":
+        form = forms.SendInvoiceForm(initial={'date':datetime.date.today()})
+    elif request.method == "POST":
+        form = forms.SendInvoiceForm(request.POST)
+        if form.is_valid():
+            sourceDoc = models.SourceDoc()
+            sourceDoc.number = models.get_new_invoice_nr()
+            sourceDoc.recordedBy = request.user
+            sourceDoc.comments = form.cleaned_data['comments']
+            sourceDoc.docType = 'invoice-out'
+            sourceDoc.save()
+            sales = models.Account.objects.get(name='Sales')
+            models.Transaction(
+                debitAccount=form.cleaned_data['client'],
+                creditAccount=sales,
+                amount=form.cleaned_data['amount'],
+                date=form.cleaned_data['date'],
+                recordedBy=request.user,
+                sourceDocument=sourceDoc,
+                comments="",
+                isConfirmed = True).save()
+            if form.cleaned_data['vat']:
+                vat = models.Account.objects.get(name='VAT')
+                models.Transaction(
+                    debitAccount=form.cleaned_data['client'],
+                    creditAccount=vat,
+                    amount=form.cleaned_data['amount'] * Decimal('0.14'),
+                    date=form.cleaned_data['date'],
+                    recordedBy=request.user,
+                    sourceDocument=sourceDoc,
+                    comments="",
+                    isConfirmed = True).save()
+            #Read data
+            return redirect(sourceDoc)
+    return render(request, "sb/send_invoice.html", 
+            {'form': form})
       
 @login_required
 def income_statement(request):

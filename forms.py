@@ -19,6 +19,7 @@ ReimbursementFormSet = formset_factory(ReimbursementForm, extra=1)
 class SourceDocForm(forms.ModelForm):
     class Meta:
         model = models.SourceDoc
+        exclude = ['docType']
 
 class DateRangeFilter(forms.Form):
     begin = forms.DateField(required=False)
@@ -29,3 +30,10 @@ class DateRangeFilter(forms.Form):
             return self.cleaned_data.get('begin', None), self.cleaned_data.get('end', None)
         else:
             return None, None
+
+class SendInvoiceForm(forms.Form):
+    client = forms.ModelChoiceField(models.Account.objects.filter(parent__name="Debtors"))
+    amount = forms.DecimalField(max_digits=16, decimal_places=2)
+    date = forms.DateField()
+    vat = forms.BooleanField(help_text='Add VAT?', required=False)
+    comments = forms.CharField(required=False, widget=forms.Textarea())
