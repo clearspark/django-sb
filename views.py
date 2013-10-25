@@ -11,9 +11,7 @@ from csdjango.sb import models, forms
 
 def check_perm(request, perm):
     if hasattr(request.user, 'bookie'):
-        print 'has attr bookie'
         if getattr(request.user.bookie, perm):
-            print 'Att is true'
             return True
     raise PermissionDenied()
     
