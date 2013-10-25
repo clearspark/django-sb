@@ -11,6 +11,7 @@ urlpatterns = patterns('csdjango.sb.views',
     url(r'^doc/details/(?P<pk>\d*)/?$', 'doc_details', name='doc-details'),
     url(r'^add_payslip/?$', 'add_payslip', name='add-payslip'),
     url(r'^send_invoice/?$', 'send_invoice', name='send-invoice'),
+    url(r'^get_invoice/?$', 'get_invoice', name='get-invoice'),
     url(r'^statements/income/?$', 'income_statement', name='income-statement'),
     url(r'^extracts/(?P<dataType>.*)/?', 'extract', name='extract'),
 

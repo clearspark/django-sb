@@ -73,8 +73,8 @@ class Account(models.Model):
 def source_doc_file_path(instance, filename):
     return "sb/src_docs/{}/{}".format(instance.number, filename)
 class SourceDoc(models.Model):
-    number = models.CharField(max_length=40, unique=True)
-    electronicCopy = models.FileField(upload_to=source_doc_file_path, blank=True, null=True)
+    number = models.CharField(max_length=40, unique=True, help_text="Document number")
+    electronicCopy = models.FileField(upload_to=source_doc_file_path, blank=True, null=True, verbose_name="Electronic copy")
     recordedTime = models.DateTimeField(auto_now=True)
     recordedBy = models.ForeignKey("auth.User", editable=False)
     comments = models.TextField(blank=True)
@@ -148,5 +148,10 @@ class Asset(models.Model):
     disposalDate = models.DateField(null=True, blank=True)
     disposalValue = models.DecimalField(max_digits=16, decimal_places=2)
     
-
-
+class Bookie(models.Model):
+    user = models.OneToOneField('auth.User', related_name='bookie')
+    canSendInvoie = models.BooleanField(default=False)
+    canReceiveInvoie = models.BooleanField(default=False)
+    canAddPayslip = models.BooleanField(default=False)
+    def __unicode__(self):
+        return self.user.get_full_name()

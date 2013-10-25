@@ -5,9 +5,18 @@ from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404, HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from csdjango.sb import models, forms
 # Create your views here.
 
+def check_perm(request, perm):
+    if hasattr(request.user, 'bookie'):
+        print 'has attr bookie'
+        if getattr(request.user.bookie, perm):
+            print 'Att is true'
+            return True
+    raise PermissionDenied()
+    
 def accounts_sum(accounts):
     return sum([a.balance() for a in accounts])
 
@@ -80,8 +89,7 @@ def trial_balance(request):
 
 @login_required
 def add_payslip(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied("Only super-users can add payslips")
+    check_perm(request, 'canAddPayslip')
     if request.method == "GET":
         pform = forms.PaySlipForm()
         dform = forms.SourceDocForm()
@@ -94,6 +102,7 @@ def add_payslip(request):
             #Read data
             sourceDoc = dform.save(commit=False)
             sourceDoc.recordedBy=request.user
+            sourceDoc.docType = 'payslip'
             sourceDoc.save()
             pdata = pform.cleaned_data
             employee = pdata["employee"]
@@ -150,11 +159,11 @@ def add_payslip(request):
             return redirect(sourceDoc)
     return render(request, "sb/payslip_form.html", 
             {'pform': pform, 'dform': dform, 'rforms': rforms})
+
 import decimal
 @login_required
 def send_invoice(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied("Only super-users can add payslips")
+    check_perm(request, 'canSendInvoice')
     if request.method == "GET":
         form = forms.SendInvoiceForm(initial={'date':datetime.date.today()})
     elif request.method == "POST":
@@ -191,7 +200,50 @@ def send_invoice(request):
             return redirect(sourceDoc)
     return render(request, "sb/send_invoice.html", 
             {'form': form})
-      
+    
+@login_required
+def get_invoice(request):
+    check_perm(request, 'canSendInvoie')
+    if request.method == "GET":
+        tform = forms.GetInvoiceForm(initial={'date':datetime.date.today()})
+        dform = forms.SourceDocForm()
+    elif request.method == "POST":
+        tform = forms.GetInvoiceForm(request.POST)
+        dform = forms.SourceDocForm(request.POST, request.FILES)
+        if tform.is_valid() and dform.is_valid():
+            sourceDoc = dform.save(commit=False)
+            sourceDoc.recordedBy = request.user
+            sourceDoc.docType = 'invoice-in'
+            sourceDoc.save()
+            t1 = models.Transaction(
+                debitAccount=tform.cleaned_data['spentOn'],
+                creditAccount=tform.cleaned_data['vendor'],
+                amount=tform.cleaned_data['amount'],
+                date=tform.cleaned_data['date'],
+                recordedBy=request.user,
+                sourceDocument=sourceDoc,
+                comments=tform.cleaned_data['comments'],
+                isConfirmed = True).save()
+            if tform.cleaned_data['vat']!='none':
+                if tform.cleaned_data['vat'] == 'auto':
+                    amount = tform.cleaned_data['amount'] * Decimal('0.14')
+                elif tform.cleaned_data['vat']=='specify':
+                    amount = tform.cleaned_data['VATAmount']
+                vat = models.Account.objects.get(name='VAT')
+                t2 = models.Transaction(
+                    debitAccount=vat,
+                    creditAccount=tform.cleaned_data['vendor'],
+                    amount=amount,
+                    date=tform.cleaned_data['date'],
+                    recordedBy=request.user,
+                    sourceDocument=sourceDoc,
+                    comments="",
+                    isConfirmed = True).save()
+            #Read data
+            return redirect(sourceDoc)
+    return render(request, "sb/get_invoice.html", 
+            {'tform': tform, 'dform': dform})
+
 @login_required
 def income_statement(request):
     salesIncomeAccounts = models.Account.objects.filter(name="sales").all()
@@ -247,6 +299,4 @@ def extract(request, dataType):
             for a in cat['accounts']:
                 writer.writerow( [a.long_name(), a.period_dt_sum, a.period_ct_sum, a.period_balance] )
         return response
-
-
 

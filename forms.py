@@ -37,3 +37,14 @@ class SendInvoiceForm(forms.Form):
     date = forms.DateField()
     vat = forms.BooleanField(help_text='Add VAT?', required=False)
     comments = forms.CharField(required=False, widget=forms.Textarea())
+
+class GetInvoiceForm(forms.Form):
+    vendor = forms.ModelChoiceField(models.Account.objects.filter(parent__name="Creditors"))
+    spentOn = forms.ModelChoiceField(models.Account.objects.filter(cat__in=["Expense", "Asset"]), label="Spent on")
+    amount = forms.DecimalField(max_digits=16, decimal_places=2)
+    date = forms.DateField()
+    vat = forms.ChoiceField(choices=(('auto', 'Auto'), ('specify', 'Specify'), ('none', 'None')),
+        help_text='Please specify whether VAT is to be added automatically, manually specified or left out.', required=True)
+    VATAmount = forms.DecimalField(label="VAT amount", max_digits=16, decimal_places=2, required=False)
+    comments = forms.CharField(required=False, widget=forms.Textarea())
+
