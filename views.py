@@ -150,10 +150,12 @@ def add_payslip(request):
                         amount=bonusAmount, date=date, recordedBy=request.user,
                         sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
             for rform in rforms:
-                models.Transaction(debitAccount=rform.cleaned_data['account'],
-                        creditAccount=employee, amount=rform.cleaned_data['amount'],
-                        date=date, recordedBy=request.user, sourceDocument=sourceDoc,
-                        comments="", isConfirmed = True).save()
+                account = rform.cleaned_data.get('account', None)
+                if account is not None:
+                    models.Transaction(debitAccount=account,
+                            creditAccount=employee, amount=rform.cleaned_data['amount'],
+                            date=date, recordedBy=request.user, sourceDocument=sourceDoc,
+                            comments="", isConfirmed = True).save()
             return redirect(sourceDoc)
     return render(request, "sb/payslip_form.html", 
             {'pform': pform, 'dform': dform, 'rforms': rforms})
