@@ -150,8 +150,8 @@ class Asset(models.Model):
     
 class Bookie(models.Model):
     user = models.OneToOneField('auth.User', related_name='bookie')
-    canSendInvoie = models.BooleanField(default=False)
-    canReceiveInvoie = models.BooleanField(default=False)
+    canSendInvoice = models.BooleanField(default=False)
+    canReceiveInvoice = models.BooleanField(default=False)
     canAddPayslip = models.BooleanField(default=False)
     def __unicode__(self):
         return self.user.get_full_name()

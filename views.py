@@ -203,7 +203,7 @@ def send_invoice(request):
     
 @login_required
 def get_invoice(request):
-    check_perm(request, 'canSendInvoie')
+    check_perm(request, 'canGetInvoice')
     if request.method == "GET":
         tform = forms.GetInvoiceForm(initial={'date':datetime.date.today()})
         dform = forms.SourceDocForm()
