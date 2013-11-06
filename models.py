@@ -7,6 +7,7 @@ ACCOUNT_CATEGORIES = (("equity", "Equity"), ("asset", "Asset"), ("liability", "L
 class Account(models.Model):
     name = models.CharField(max_length=200)
     cat = models.CharField(max_length=200, choices=ACCOUNT_CATEGORIES)
+    gl_code = models.CharField(max_length=20, blank=True)
     parent = models.ForeignKey("self", related_name="children", null=True, blank=True)
     class Meta:
         ordering = ["name"]
