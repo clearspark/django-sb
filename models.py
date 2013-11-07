@@ -3,6 +3,8 @@ from django.core.urlresolvers import reverse
 #from mptt.models import MPTTModel, TreeForeignKey
 
 ACCOUNT_CATEGORIES = (("equity", "Equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense"))
+INCOME_STATEMENT_CATS = ('income', 'expense',)
+BALANCE_SHEET_CATS = ('equity', 'asset', 'liability',)
 # Create your models here.
 class Account(models.Model):
     name = models.CharField(max_length=200)
@@ -70,6 +72,13 @@ class Account(models.Model):
         return reverse("account-details", kwargs={"pk": self.pk})
     def href(self):
         return '<a href="%s">%s</a>' %(self.get_absolute_url(), self.name)
+    def statement_type(self):
+        if self.cat in INCOME_STATEMENT_CATS:
+            return 'Income statement'
+        elif self.cat in BALANCE_SHEET_CATS:
+            return 'Balance sheet'
+        else:
+            return None
 
 def source_doc_file_path(instance, filename):
     return "sb/src_docs/{}/{}".format(instance.number, filename)

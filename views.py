@@ -280,23 +280,11 @@ def extract(request, dataType):
             writer.writerow( [t.date, t.debitAccount.long_name(), t.creditAccount.long_name(), t.amount, t.comments, t.sourceDocument.number if t.sourceDocument else ''] )
         return response
     if dataType == 'trial balance':
-        def annotate(cat):
-            accounts = list(models.Account.objects.filter(cat=cat).all())
-            for a in accounts:
-                a.period_dt_sum = a.dt_sum(begin, end)
-                a.period_ct_sum = a.ct_sum(begin, end)
-                a.period_balance = a.balance(begin, end)
-            return accounts
-        accGroups = [ {'cat': cat[1], 'accounts': annotate(cat[0])}
-                    for cat in models.ACCOUNT_CATEGORIES]
-        for g in accGroups:
-            g['total'] = sum([ a.period_balance for a in g['accounts']])
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="Trial_balance_%s.csv"' %datetime.date.today().isoformat()
         writer = csv.writer(response, dialect='excel')
-        writer.writerow(['Account name', 'Debit total', 'Credit total', 'Balance'])
-        for cat in accGroups:
-            for a in cat['accounts']:
-                writer.writerow( [a.long_name(), a.period_dt_sum, a.period_ct_sum, a.period_balance] )
+        writer.writerow(['gl_code', 'Account name', 'Account type', 'Statement', 'Debit total', 'Credit total', 'Balance'])
+        for a in models.Account.objects.order_by('gl_code').all():
+            writer.writerow( [a.gl_code, a.long_name(), a.get_cat_display(), a.statement_type(), a.dt_sum(begin=begin, end=end), a.ct_sum(begin, end), a.balance(begin=begin, end=end)] )
         return response
 
