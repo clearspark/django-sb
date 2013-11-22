@@ -4,6 +4,7 @@
 
     {% load humanize %}
     <h1>Income Statement</h1>
+    {% include "sb/datefilter.html" with datefilter=datefilter %}
     <table class="frame">
         {% for cat in cats %}
             <tr>

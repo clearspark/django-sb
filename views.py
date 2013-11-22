@@ -15,8 +15,8 @@ def check_perm(request, perm):
             return True
     raise PermissionDenied()
     
-def accounts_sum(accounts):
-    return sum([a.balance() for a in accounts])
+def accounts_sum(accounts, begin=None, end=None):
+    return sum([a.balance(begin, end) for a in accounts])
 
 @login_required
 def account_list(request):
@@ -246,17 +246,19 @@ def get_invoice(request):
 
 @login_required
 def income_statement(request):
+    dateform = forms.DateRangeFilter(request.GET)
+    begin, end = dateform.get_range()
     salesIncomeAccounts = models.Account.objects.filter(name="sales").all()
-    salesIncomeSum = - accounts_sum(salesIncomeAccounts)
+    salesIncomeSum = - accounts_sum(salesIncomeAccounts, begin, end)
     sales = {"name": "Normal income", "accounts": salesIncomeAccounts, "sum": salesIncomeSum}
     otherIncomeAccounts = models.Account.objects.exclude(name="Sales").filter(cat="income").all()
-    otherIncomeSum = - accounts_sum(otherIncomeAccounts)
+    otherIncomeSum = - accounts_sum(otherIncomeAccounts, begin, end)
     other = {"name": "Other income", "accounts": otherIncomeAccounts, "sum": otherIncomeSum}
     expenseAccounts = models.Account.objects.filter(cat="expense").all()
-    expenseSum = - accounts_sum(expenseAccounts)
+    expenseSum = - accounts_sum(expenseAccounts, begin, end)
     expenses = {"name": "Expenses", "accounts": expenseAccounts, "sum": expenseSum}
     totalSum = salesIncomeSum + otherIncomeSum + expenseSum
-    return render(request, "sb/income_statement.html", {"cats":[sales, other, expenses], "net": totalSum})
+    return render(request, "sb/income_statement.html", {"cats":[sales, other, expenses], "net": totalSum, 'dateform': dateform})
 
 @login_required
 def extract(request, dataType):
