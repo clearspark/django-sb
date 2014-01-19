@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from csdjango.sb import models, forms
+from sb import models, forms
 # Create your views here.
 
 def check_perm(request, perm):

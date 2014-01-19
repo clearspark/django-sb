@@ -1,6 +1,6 @@
 from django import forms
 from django.forms.formsets import formset_factory
-from csdjango.sb import models
+from sb import models
 
 class PaySlipForm(forms.Form):
     employee = forms.ModelChoiceField(models.Account.objects.filter(parent__name="Creditors"))

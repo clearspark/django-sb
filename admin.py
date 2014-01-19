@@ -1,5 +1,5 @@
 from django.contrib import admin
-from csdjango.sb import models
+from sb import models
 
 class TransactionInline(admin.StackedInline):
     model = models.Transaction
