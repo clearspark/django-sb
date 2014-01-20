@@ -2,6 +2,11 @@
 
 {% block appHead %}
     <link href="{{STATIC_URL}}sb/sb.css" rel="stylesheet" type="text/css"/>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $("td:empty").html("&nbsp;");
+        });
+    </script>
 {% endblock %}
 
 {% block appMenu %}
