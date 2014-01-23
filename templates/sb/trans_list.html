@@ -5,7 +5,21 @@
     <h1>Transaction list</h1>
     This view shows all transactions that fall within the given period.
     
-    {% include "sb/datefilter.html" with datefilter=datefilter %}
+    <h2>Filter results:</h2> 
+    <form>
+        <h3>Dates shown:</h3>
+        <table class="form-table">
+            {{dateform.as_table}}
+        </table>
+        <h3>Accounts:</h3>
+        <p class="help-text">
+            Transactions matching either the debit or credit condition will be shown.
+        </p>
+        <table class="form-table">
+            {{accountform.as_table}}
+        </table>
+        <input type="submit" value="Filter"/>
+    </form>
 
     <h3>
         <a href='{% url extract dataType='transactions' %}?begin={{begin|default:''}}&end={{end|default:''}}'>Click to Download currently displayed transactions in CSV format</a>

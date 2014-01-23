@@ -6,6 +6,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db.models import Sum
+
 from sb import models, forms
 # Create your views here.
 
@@ -64,8 +66,15 @@ def trans_list(request):
     if end is not None:
         transactions = transactions.filter(date__lte=end)
         end = end.isoformat()
+    accountform = models.AccountFilter(request.GET)
+    if accountform.is_valid():
+        debitAccounts = accountform.cleaned_data['debitAccount']
+        creditAccounts = accountform.cleaned_data['creditAccount']
+        transactions = transactions.filter(debitAccount=debitAccounts, creditAccount=creditAccounts)
+    total = transaction.aggregate(Sum('amount'))['amount_sum']
     return render(request, "sb/trans_list.html",
-            {"transactions": transactions, 'dateform': dateform, 'begin': begin, 'end': end})
+            {"transactions": transactions, 'dateform': dateform, 'begin': begin,
+                'end': end, 'accountform': accountform, 'total': total})
 
 @login_required
 def trial_balance(request):

@@ -48,3 +48,6 @@ class GetInvoiceForm(forms.Form):
     VATAmount = forms.DecimalField(label="VAT amount", max_digits=16, decimal_places=2, required=False)
     comments = forms.CharField(required=False, widget=forms.Textarea())
 
+class AccountFilter(forms.Form):
+    debitAccount = forms.ModelChoiceField(queryset = models.Account.objects.all())
+    creditAccount = forms.ModelChoiceField(queryset = models.Account.objects.all())
