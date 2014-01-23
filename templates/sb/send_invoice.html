@@ -1,6 +1,6 @@
-{% extends "sb/app_site_glue.html" %}
+{% extends "sb/base.html" %}
 
-{% block mainContent %}
+{% block sbContent %}
     <h1>Sending new invoice</h2>
     <form action="" method="POST" enctype="multipart/form-data">
         {% csrf_token %}

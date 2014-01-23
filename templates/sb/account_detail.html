@@ -1,6 +1,6 @@
-{% extends "sb/app_site_glue.html" %}
+{% extends "sb/base.html" %}
 
-{% block mainContent %}
+{% block sbContent %}
     <h1>{{account}}: {{account.period_balance}}</h1>
 
     {% include "sb/datefilter.html" %}

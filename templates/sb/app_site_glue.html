@@ -1,19 +1,17 @@
-{% extends "sb/base.html" %}
+{% extends "base.html" %}
 
 {% block appHead %}
-    <link href="{{STATIC_URL}}sb/sb.css" rel="stylesheet" type="text/css"/>
-    <script type="text/javascript">
-        $(document).ready(function() {
-            $("td:empty").html("&nbsp;");
-        });
-    </script>
+    {% block sbHead %}
+    {% endblock %}
 {% endblock %}
 
 {% block appMenu %}
-    {% include "sb/app_menu.html" %}
+    {% block sbMenu %}
+    {% endblock %}
 {% endblock %}
 
 {% block mainContent %}
-
+    {% block sbContent %}
+    {% endblock %}
 {% endblock %}
 

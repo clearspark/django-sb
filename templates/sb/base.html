@@ -1,9 +1,18 @@
-<html>
-    <head>
-        <title>sb</title>
-    </head>
-    <body>
-        {% block mainContent %}
-        {% endblock %}
-    </body>
-</html>
+{% extends "sb/app_site_glue.html" %}
+
+{% block sbHead %}
+    <link href="{{STATIC_URL}}sb/sb.css" rel="stylesheet" type="text/css"/>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $("td:empty").html("&nbsp;");
+        });
+    </script>
+{% endblock %}
+
+{% block sbMenu %}
+    {% include "sb/app_menu.html" %}
+{% endblock %}
+
+{% block sbContent %}
+
+{% endblock %}
