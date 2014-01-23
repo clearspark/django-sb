@@ -49,5 +49,5 @@ class GetInvoiceForm(forms.Form):
     comments = forms.CharField(required=False, widget=forms.Textarea())
 
 class AccountFilter(forms.Form):
-    debitAccount = forms.ModelChoiceField(queryset = models.Account.objects.all())
-    creditAccount = forms.ModelChoiceField(queryset = models.Account.objects.all())
+    debitAccount = forms.ModelMultipleChoiceField(queryset = models.Account.objects.all(), required=False)
+    creditAccount = forms.ModelMultipleChoiceField(queryset = models.Account.objects.all(), required=False)

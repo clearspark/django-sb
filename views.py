@@ -66,12 +66,12 @@ def trans_list(request):
     if end is not None:
         transactions = transactions.filter(date__lte=end)
         end = end.isoformat()
-    accountform = models.AccountFilter(request.GET)
+    accountform = forms.AccountFilter(request.GET)
     if accountform.is_valid():
         debitAccounts = accountform.cleaned_data['debitAccount']
         creditAccounts = accountform.cleaned_data['creditAccount']
-        transactions = transactions.filter(debitAccount=debitAccounts, creditAccount=creditAccounts)
-    total = transaction.aggregate(Sum('amount'))['amount_sum']
+        transactions = transactions.filter(debitAccount__in=debitAccounts, creditAccount__in=creditAccounts).distinct()
+    total = transactions.aggregate(Sum('amount'))['amount__sum']
     return render(request, "sb/trans_list.html",
             {"transactions": transactions, 'dateform': dateform, 'begin': begin,
                 'end': end, 'accountform': accountform, 'total': total})
