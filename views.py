@@ -70,7 +70,10 @@ def trans_list(request):
     if accountform.is_valid():
         debitAccounts = accountform.cleaned_data['debitAccount']
         creditAccounts = accountform.cleaned_data['creditAccount']
-        transactions = transactions.filter(debitAccount__in=debitAccounts, creditAccount__in=creditAccounts).distinct()
+        if debitAccounts:
+            transactions = transactions.filter(debitAccount__in=debitAccounts)
+        if creditAccounts:
+            transactions = transactions.filter(creditAccount__in=creditAccounts)
     total = transactions.aggregate(Sum('amount'))['amount__sum']
     return render(request, "sb/trans_list.html",
             {"transactions": transactions, 'dateform': dateform, 'begin': begin,

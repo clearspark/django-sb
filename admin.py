@@ -17,6 +17,7 @@ class TransactionAdmin(admin.ModelAdmin):
 class SourceDocAdmin(admin.ModelAdmin):
     list_display = ["number", "transaction_count", "has_file", 'docType']
     list_editable = ['docType']
+    list_filter = ['docType']
     inlines = [TransactionInline]
     save_on_top = True
     def save_model(self, request, obj, form, change):
