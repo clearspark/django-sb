@@ -136,7 +136,7 @@ def add_payslip(request):
                         amount=payeAmount, date=date, recordedBy=request.user,
                         sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
             else:
-                payeAmount = Decimal(0.0)
+                payeAmount = Decimal('0.0')
             if uifAmount:
                 #Increace employee account with paye ammount
                 models.Transaction(debitAccount=uif, creditAccount=employee,
@@ -146,8 +146,13 @@ def add_payslip(request):
                 models.Transaction(debitAccount=employee, creditAccount=sars,
                         amount=uifAmount, date=date, recordedBy=request.user,
                         sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+                #Add company contribution
+                models.Transaction(debitAccount=uif, creditAccount=sars,
+                        amount=uifAmount, date=date, recordedBy=request.user,
+                        sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+
             else:
-                uifAmount = Decimal(0.0)
+                uifAmount = Decimal('0.0')
             #Increace employee account with nett salary
             nett = grossAmount - payeAmount - uifAmount
             models.Transaction(debitAccount=salaries, creditAccount=employee,
