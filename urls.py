@@ -14,5 +14,7 @@ urlpatterns = patterns('sb.views',
     url(r'^get_invoice/?$', 'get_invoice', name='get-invoice'),
     url(r'^statements/income/?$', 'income_statement', name='income-statement'),
     url(r'^extracts/(?P<dataType>.*)/?', 'extract', name='extract'),
+    url(r'^apply_interest/', 'apply_interest', name='apply-interest'),
+
 
 )

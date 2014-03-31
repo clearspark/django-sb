@@ -1,7 +1,8 @@
 import csv
 import datetime
-
 from decimal import Decimal
+import calendar
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404, HttpResponse
 from django.contrib.auth.decorators import login_required
@@ -301,4 +302,39 @@ def extract(request, dataType):
         for a in models.Account.objects.order_by('gl_code').all():
             writer.writerow( [a.gl_code, a.long_name(), a.get_cat_display(), a.statement_type(), a.dt_sum(begin=begin, end=end), a.ct_sum(begin, end), a.balance(begin=begin, end=end)] )
         return response
+
+def apply_interest(request):
+    if request.method == "POST":
+        form = forms.InterestForm(request.POST)
+        if form.is_valid():
+            print form.cleaned_data
+            data = form.cleaned_data
+            last_day = calendar.monthrange(data['year'], data['month'])[1]
+            begin = datetime.date(data['year'], data['month'], 1)
+            end = datetime.date(data['year'], data['month'], last_day)
+            sourceDoc = models.SourceDoc(number=data['docNumber'],
+                    recordedBy=request.user,
+                    docType='other'
+                    )
+            print sourceDoc
+            sourceDoc.save()
+            for a in data['accounts']:
+                balance = a.get_average_balance(begin, end)
+                interest_amount = balance * data['rate'] / Decimal("12.0")
+                print a, ':'
+                print interest_amount
+                print balance
+                t = models.Transaction(debitAccount=data['expense'],
+                        creditAccount=a,
+                        date=data['date'],
+                        amount=interest_amount,
+                        recordedBy=request.user,
+                        sourceDocument=sourceDoc)
+                print t
+                t.save()
+            return redirect(sourceDoc)
+
+    else:
+        form = forms.InterestForm()
+    return render(request, 'sb/generic_form.html', {'form': form, 'heading': "Apply Interest"})
 

@@ -14,7 +14,17 @@ class ReimbursementForm(forms.Form):
     amount = forms.DecimalField(decimal_places=2, required=False)
     account = forms.ModelChoiceField(models.Account.objects.all())
 
-ReimbursementFormSet = formset_factory(ReimbursementForm, extra=1)
+ReimbursementFormSet = formset_factory(ReimbursementForm, extra=3)
+
+class InterestForm(forms.Form):
+    docNumber = forms.CharField(max_length=40)
+    date = forms.DateField()
+    accounts = forms.ModelMultipleChoiceField(models.Account.objects.filter(parent__name="Creditors"))
+    expense = forms.ModelChoiceField(models.Account.objects.filter(parent__name="Interest Cost"))
+    year = forms.IntegerField(min_value=2010, max_value=2015)
+    month = forms.IntegerField(min_value=1, max_value=12)
+    rate = forms.DecimalField()
+    compoundInterval = forms.ChoiceField(choices=(('monthly', 'Monthly'),))
 
 class SourceDocForm(forms.ModelForm):
     class Meta:

@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from django.db import models
 from django.core.urlresolvers import reverse
 #from mptt.models import MPTTModel, TreeForeignKey
@@ -62,6 +64,18 @@ class Account(models.Model):
             return "Dr {}".format(balance)
         else:
             return "Cr {}".format(-balance)
+    def get_average_balance(self, begin, end):
+        num_days = (end - begin).days + 1
+        print 'num_days', num_days
+        avg_balance = self.balance(end=(begin-timedelta(days=1)))
+        print 'starting balance', avg_balance
+        debits = self.get_debits(begin, end)
+        credits = self.get_credits(begin, end)
+        for d in debits:
+            avg_balance += (d.amount * (end - d.date).days) / num_days
+        for c in credits:
+            avg_balance -= (c.amount * (end - d,date).days) / num_days
+        return avg_balance
     def dt_count(self, *args, **kwargs):
         return self.get_debits(*args, **kwargs).all().count()
     def ct_count(self, *args, **kwargs):
