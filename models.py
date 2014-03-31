@@ -74,7 +74,7 @@ class Account(models.Model):
         for d in debits:
             avg_balance += (d.amount * (end - d.date).days) / num_days
         for c in credits:
-            avg_balance -= (c.amount * (end - d,date).days) / num_days
+            avg_balance -= (c.amount * (end - c.date).days) / num_days
         return avg_balance
     def dt_count(self, *args, **kwargs):
         return self.get_debits(*args, **kwargs).all().count()
