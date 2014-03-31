@@ -127,6 +127,7 @@ def add_payslip(request):
             salaries = models.Account.objects.get(name="Salaries")
             paye = models.Account.objects.get(name="PAYE")
             uif = models.Account.objects.get(name="UIF")
+            sdl = models.Account.objects.get(name="SDL")
             sars = models.Account.objects.get(name="SARS")
             bonusses = models.Account.objects.get(name="Bonusses")
             #generate transactions
@@ -140,7 +141,7 @@ def add_payslip(request):
                         amount=payeAmount, date=date, recordedBy=request.user,
                         sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
             else:
-                payeAmount = Decimal(0.0)
+                payeAmount = Decimal('0.0')
             if uifAmount:
                 #Increace employee account with paye ammount
                 models.Transaction(debitAccount=uif, creditAccount=employee,
@@ -150,12 +151,22 @@ def add_payslip(request):
                 models.Transaction(debitAccount=employee, creditAccount=sars,
                         amount=uifAmount, date=date, recordedBy=request.user,
                         sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+                #Add company contribution
+                models.Transaction(debitAccount=uif, creditAccount=sars,
+                        amount=uifAmount, date=date, recordedBy=request.user,
+                        sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+
             else:
-                uifAmount = Decimal(0.0)
+                uifAmount = Decimal('0.0')
             #Increace employee account with nett salary
             nett = grossAmount - payeAmount - uifAmount
             models.Transaction(debitAccount=salaries, creditAccount=employee,
                     amount=nett, date=date, recordedBy=request.user,
+                    sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+            #Add SDL transation
+            sdlAmount = grossAmount / Decimal('100.00')
+            models.Transaction(debitAccount=sdl, creditAccount=sars,
+                    amount=sdlAmount, date=date, recordedBy=request.user,
                     sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
             #Increace employee account with bonus amount
             if bonusAmount:
