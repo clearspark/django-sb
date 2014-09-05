@@ -331,7 +331,7 @@ def apply_interest(request):
             sourceDoc.save()
             for a in data['accounts']:
                 balance = a.get_average_balance(begin, end)
-                interest_amount = balance * data['rate'] / Decimal("12.0")
+                interest_amount = abs(balance * data['rate'] / Decimal("12.0"))
                 print a, ':'
                 print interest_amount
                 print balance
