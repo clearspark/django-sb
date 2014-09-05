@@ -4,9 +4,24 @@
     <h1>Sending new invoice</h2>
     <form action="" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
+        <h2>General</h2>
         <table class='form-table'>
             {{form}}
         </table>
+        <h2>Line items</h2>
+        <p class="help-text">
+            Please try to keep invoices to a reasonable amount of line items as it may not fit on one page if there are too many.
+        </p>
+
+        <table>
+            <tr><th>Description</th><th>Amount</th><th>Vat</th></tr>
+            {% for f in lineforms %}
+                <tr>
+                    <td>{{f.description}}</td><td>{{f.amount}}</td><td>{{f.vat}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        {{lineforms.management_form}}
         <input type=submit value="submit"/>
     </form>
 

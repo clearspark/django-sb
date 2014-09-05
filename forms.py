@@ -1,4 +1,5 @@
 from django import forms
+from django.forms.models import modelformset_factory
 from django.forms.formsets import formset_factory
 from sb import models
 
@@ -42,11 +43,19 @@ class DateRangeFilter(forms.Form):
             return None, None
 
 class SendInvoiceForm(forms.Form):
-    client = forms.ModelChoiceField(models.Account.objects.filter(parent__name="Debtors"))
-    amount = forms.DecimalField(max_digits=16, decimal_places=2)
+    client = forms.ModelChoiceField(models.Client.objects.all())
     date = forms.DateField()
-    vat = forms.BooleanField(help_text='Add VAT?', required=False)
     comments = forms.CharField(required=False, widget=forms.Textarea())
+
+class InvoiceLineForm(forms.ModelForm):
+    class Meta:
+        model = models.InvoiceLine
+        fields = ('description', 'amount', 'vat')
+        widgets = {
+                'description': forms.TextInput(attrs={'size':60})
+                }
+
+InvoiceLinesFormSet = modelformset_factory(models.InvoiceLine, form=InvoiceLineForm, extra=6)
 
 class GetInvoiceForm(forms.Form):
     vendor = forms.ModelChoiceField(models.Account.objects.filter(parent__name="Creditors"))

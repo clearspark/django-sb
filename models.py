@@ -94,6 +94,16 @@ class Account(models.Model):
         else:
             return None
 
+class Client(models.Model):
+    account = models.ForeignKey('Account')
+    adminGoup = models.ForeignKey('auth.Group')
+    displayName = models.CharField(max_length=100)
+    invoiceTemplate = models.TextField(blank=True)
+    statementTemplate = models.TextField(blank=True)
+    invoice_suffix = models.CharField(max_length=12)
+    def __unicode__(self):
+        return self.displayName
+
 def source_doc_file_path(instance, filename):
     return "sb/src_docs/{}/{}".format(instance.number, filename)
 class SourceDoc(models.Model):
@@ -122,18 +132,29 @@ class SourceDoc(models.Model):
             return True
         else:
             return False
-def get_new_invoice_nr():
-    invoices = SourceDoc.objects.filter(docType='invoice-out').order_by('-recordedTime').all()
-    if not invoices:
-        nr = 1
-    else:
-        nr_string = invoices[0].number
-        print nr_string
-        nr_string = ''.join( [ c for c in nr_string if c in '1234567890' ])
-        print nr_string
-        nr = int(nr_string) + 1
-        print nr
-    return 'CS' + str(nr)
+
+def get_new_invoice_nr(client):
+    num = Invoice.objects.filter(client=client).count() + 1
+    return "CS%04d-%s" %(num, client.invoice_suffix)
+
+class Invoice(SourceDoc):
+    client = models.ForeignKey('Client')
+    html = models.TextField(blank=True)
+    finalized = models.BooleanField(default=False)
+    def __unicode__(self):
+        return self.number
+    def get_total_excl(self):
+        return self.invoiceline_set.aggregate(models.Sum('amount'))['amount_sum']
+    def get_total_vat(self):
+        return self.invoiceline_set.aggregate(models.Sum('vat'))['vat_sum']
+    def get_total_incl(self):
+        return self.get_total_excl + self.get_total_vat
+
+class InvoiceLine(models.Model):
+    invoice = models.ForeignKey('Invoice')
+    description = models.CharField(max_length=1000)
+    amount = models.DecimalField(max_digits=16, decimal_places=2)
+    vat = models.DecimalField(max_digits=16, decimal_places=2)
 
 class Transaction(models.Model):
     debitAccount = models.ForeignKey("Account", related_name="debits")
@@ -177,5 +198,6 @@ class Bookie(models.Model):
     canSendInvoice = models.BooleanField(default=False)
     canReceiveInvoice = models.BooleanField(default=False)
     canAddPayslip = models.BooleanField(default=False)
+    canApplyInterest = models.BooleanField(default=False)
     def __unicode__(self):
         return self.user.get_full_name()

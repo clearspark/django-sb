@@ -10,11 +10,13 @@ urlpatterns = patterns('sb.views',
     url(r'^doc/list/?$', 'doc_list', name='doc-list'),
     url(r'^doc/details/(?P<pk>\d*)/?$', 'doc_details', name='doc-details'),
     url(r'^add_payslip/?$', 'add_payslip', name='add-payslip'),
-    url(r'^send_invoice/?$', 'send_invoice', name='send-invoice'),
+    url(r'^send_invoice/step1/?$', 'send_invoice1', name='send-invoice'),
+    url(r'^send_invoice/step2/?$', 'send_invoice2', name='send-invoice2'),
     url(r'^get_invoice/?$', 'get_invoice', name='get-invoice'),
     url(r'^statements/income/?$', 'income_statement', name='income-statement'),
     url(r'^extracts/(?P<dataType>.*)/?', 'extract', name='extract'),
     url(r'^apply_interest/', 'apply_interest', name='apply-interest'),
-
+    url(r'^client_statements/(?P<client_id>\d*)/?$', 'client_account_statement', name='client-statement'),
+    url(r'^view_invoice/(?P<invoice_nr>.*)/?$', 'view_invoice', name='client-statement'),
 
 )
