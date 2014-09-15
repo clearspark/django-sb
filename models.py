@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from django.db import models
 from django.core.urlresolvers import reverse
+from django.template import Template, Context
 #from mptt.models import MPTTModel, TreeForeignKey
 
 ACCOUNT_CATEGORIES = (("equity", "Equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense"))
@@ -144,11 +145,15 @@ class Invoice(SourceDoc):
     def __unicode__(self):
         return self.number
     def get_total_excl(self):
-        return self.invoiceline_set.aggregate(models.Sum('amount'))['amount_sum']
+        return self.invoiceline_set.aggregate(models.Sum('amount'))['amount__sum']
     def get_total_vat(self):
-        return self.invoiceline_set.aggregate(models.Sum('vat'))['vat_sum']
+        return self.invoiceline_set.aggregate(models.Sum('vat'))['vat__sum']
     def get_total_incl(self):
-        return self.get_total_excl + self.get_total_vat
+        return self.get_total_excl() + self.get_total_vat()
+    def make_html(self):
+        t = Template(self.client.invoiceTemplate)
+        c = Context({'invoice': self})
+        return t.render(c)
 
 class InvoiceLine(models.Model):
     invoice = models.ForeignKey('Invoice')

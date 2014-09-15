@@ -188,7 +188,7 @@ def add_payslip(request):
 
 import decimal
 @login_required
-def send_invoice1(request):
+def send_invoice(request):
     check_perm(request, 'canSendInvoice')
     if request.method == "GET":
         form = forms.SendInvoiceForm(initial={'date':datetime.date.today()})
@@ -210,16 +210,14 @@ def send_invoice1(request):
                 #lineItem = l.save(commit=False)
                 lineItem.invoice = sourceDoc
                 lineItem.save()
-            t = Template(client.invoiceTemplate)
-            c = Context({'invoice': sourceDoc})
-            sourceDoc.html = t.render(c)
+            sourceDoc.html = sourceDoc.make_html()
             sourceDoc.save()
             sales = models.Account.objects.get(name='Sales')
             amount = sourceDoc.get_total_excl()
             models.Transaction(
                 debitAccount=form.cleaned_data['client'].account,
                 creditAccount=sales,
-                amount=form.cleaned_data['amount'],
+                amount=amount,
                 date=form.cleaned_data['date'],
                 recordedBy=request.user,
                 sourceDocument=sourceDoc,
@@ -240,11 +238,6 @@ def send_invoice1(request):
             return redirect(sourceDoc)
     return render(request, "sb/send_invoice.html", 
             {'form': form, 'lineforms': lineForms})
-
-
-@login_required
-def send_invoice2(request):
-    pass
 
 @login_required
 def get_invoice(request):
@@ -352,7 +345,7 @@ def apply_interest(request):
             sourceDoc.save()
             for a in data['accounts']:
                 balance = a.get_average_balance(begin, end)
-                interest_amount = balance * data['rate'] / Decimal("12.0")
+                interest_amount = abs(balance * data['rate'] / Decimal("12.0"))
                 t = models.Transaction(debitAccount=data['expense'],
                         creditAccount=a,
                         date=data['date'],
@@ -395,5 +388,8 @@ def view_invoice(request, invoice_nr):
     client = invoice.client
     if not client.adminGoup.user_set.filter(pk=request.user.pk).exists():
         raise PermissionDenied
-    return HttpResponse(invoice.html)
+    if request.GET.get('generate', False):
+        return HttpResponse(invoice.make_html())
+    else:
+        return HttpResponse(invoice.html)
 
