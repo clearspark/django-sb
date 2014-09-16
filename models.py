@@ -135,7 +135,7 @@ class SourceDoc(models.Model):
             return False
 
 def get_new_invoice_nr(client):
-    num = Invoice.objects.filter(client=client).count() + 1
+    num = Invoice.objects.filter(client=client).count() + 71
     return "CS%04d-%s" %(num, client.invoice_suffix)
 
 class Invoice(SourceDoc):
