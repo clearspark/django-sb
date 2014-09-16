@@ -70,3 +70,8 @@ class GetInvoiceForm(forms.Form):
 class AccountFilter(forms.Form):
     debitAccount = forms.ModelMultipleChoiceField(queryset = models.Account.objects.all(), required=False)
     creditAccount = forms.ModelMultipleChoiceField(queryset = models.Account.objects.all(), required=False)
+
+class ClientStatementForm(forms.Form):
+    client = forms.ModelChoiceField(models.Client.objects.all(), label="Client")
+    statementDate = forms.DateField(required=True)
+    startDate = forms.DateField(help_text="Date from which to show transactions", required=True)

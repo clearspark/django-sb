@@ -16,6 +16,6 @@ urlpatterns = patterns('sb.views',
     url(r'^statements/income/?$', 'income_statement', name='income-statement'),
     url(r'^extracts/(?P<dataType>.*)/?', 'extract', name='extract'),
     url(r'^apply_interest/', 'apply_interest', name='apply-interest'),
-    url(r'^client_statements/(?P<client_id>\d*)/?$', 'client_account_statement', name='client-statement'),
+    url(r'^client_statements/?$', 'client_account_statement', name='client-statement-view'),
 
 )

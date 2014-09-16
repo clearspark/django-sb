@@ -359,29 +359,60 @@ def apply_interest(request):
         form = forms.InterestForm()
     return render(request, 'sb/generic_form.html', {'form': form, 'heading': "Apply Interest"})
 
-def client_account_statement(request, client_id):
-    client = get_object_or_404(models.Client, pk=client_id)
-    if not client.adminGoup.user_set.filter(pk=request.user.pk).exists():
-        raise PermissionDenied
-    account = client.account
-    dateform = forms.DateRangeFilter(request.GET)
-    begin, end = dateform.get_range()
-    if not begin:
-        messages.info(request, "Please enter start-data to generate invoice")
-        return render(request, client.statementTemplate, {})
-    day_before = begin - datetime.timedelta(days=1)
-    initial_balance = - account.balance(begin=None, end=day_before)
-    transactions = account.get_transactions(begin=begin, end=end)
-    rows = []
-    current_balance = initial_balance
-    for t in transactions:
-        if t.debitAccount == account:
-            current_balance -= t.amount
-            rows.append([t.date, t.sourceDocument.number, -t.amount, current_balance])
-        else:
-            current_balance += t.amount
-            rows.append([t.date, t.sourceDocument.number, t.amount, current_balance])
-    return render(request, client.statementTemplate, {'rows': rows, })
+@login_required
+def client_account_statement(request):
+    form = forms.ClientStatementForm(request.GET or None)
+    if form.is_valid():
+        client = form.cleaned_data['client']
+        if not client.adminGoup.user_set.filter(pk=request.user.pk).exists():
+            raise PermissionDenied
+        account = client.account
+        statementDate = form.cleaned_data['statementDate']
+        startDate = form.cleaned_data['startDate']
+        starting_balance = account.balance(end=startDate - datetime.timedelta(days=1))
+        rows = []
+        rows.append(['', startDate, 'Balance carried over', '', '', starting_balance])
+        transactions = account.get_transactions(begin=startDate, end=statementDate)
+        balance = starting_balance
+        for t in transactions:
+            if t.debitAccount == account:
+                balance += t.amount
+                rows.append([t.sourceDocument.number, t.date, t.comments, t.amount, '', balance])
+            else:
+                balance -= t.amount
+                rows.append([t.sourceDocument.number, t.date, t.comments, '', t.amount, balance])
+        debits = account.get_debits().order_by('-date')
+        current = Decimal('0.00')
+        days_31_60 = Decimal('0.00')
+        days_61_90 = Decimal('0.00')
+        days_90_plus = Decimal('0.00')
+        for d in debits:
+            days_ago = statementDate - d.date
+            amount = min(balance, d.amount)
+            if  days_ago < datetime.timedelta(days=31):
+                current += amount
+            elif days_ago < datetime.timedelta(days=61):
+                days_31_60 += amount
+            elif days_ago < datetime.timedelta(days=91):
+                days_61_90 += amount
+            else:
+                days_90_plus += amount
+            balance -= d.amount
+            if balance <= Decimal('0.00'):
+                break
+
+
+        t = Template(client.statementTemplate)
+        c = Context({'rows': rows,
+            'current': current,
+            'days_31_60': days_31_60,
+            'days_61_90': days_61_90,
+            'days_90_plus': days_90_plus})
+        response = HttpResponse(t.render(c))
+        return response
+    else:
+        return render(request, 'sb/client_statements_menu.html', {'form': form})
+    
 
 def view_invoice(request, invoice_nr):
     invoice = get_object_or_404(models.Invoice, number=invoice_nr)

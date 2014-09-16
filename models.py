@@ -160,6 +160,8 @@ class InvoiceLine(models.Model):
     description = models.CharField(max_length=1000)
     amount = models.DecimalField(max_digits=16, decimal_places=2)
     vat = models.DecimalField(max_digits=16, decimal_places=2)
+    class Meta:
+        ordering = ['pk']
 
 class Transaction(models.Model):
     debitAccount = models.ForeignKey("Account", related_name="debits")
