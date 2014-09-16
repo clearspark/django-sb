@@ -1,5 +1,16 @@
 {% extends "sb/base.html" %}
 
+{% block sbHead %}
+	{{block.super}}
+	<script type='text/javascript'>
+		$(document).ready(function() {
+			$('td.lineItemAmount input').change(function(EventObject){
+				$(this).parent().next().children('input').val((Number($(this).val())*0.14).toFixed(2));
+			});
+		});
+	</script>
+{% endblock %}
+
 {% block sbContent %}
     <h1>Sending new invoice</h2>
     <form action="" method="POST">
@@ -18,7 +29,7 @@
             <tr><th>Description</th><th>Amount</th><th>Vat</th></tr>
             {% for f in lineforms %}
                 <tr>
-                    <td>{{f.id}}{{f.description}}</td><td>{{f.amount}}</td><td>{{f.vat}}</td>
+                    <td>{{f.id}}{{f.description}}</td><td class='lineItemAmount'>{{f.amount}}</td><td>{{f.vat}}</td>
                 </tr>
             {% endfor %}
         </table>
