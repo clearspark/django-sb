@@ -3,9 +3,23 @@
 {% block sbHead %}
 	{{block.super}}
 	<script type='text/javascript'>
+		function calcVAT(EventObject){
+			$(this).parent().next().children('input').val((Number($(this).val())*0.14).toFixed(2));
+		}
 		$(document).ready(function() {
-			$('td.lineItemAmount input').change(function(EventObject){
-				$(this).parent().next().children('input').val((Number($(this).val())*0.14).toFixed(2));
+			$('td.lineItemAmount input').change(calcVAT);
+			$('input#newLineItemTrigger').click(function(EventObject) {
+				var newLineItem = $(this).parent().parent().prev().clone();
+				var L = newLineItem.children("td").children();
+				for (var i = 0; i < L.length; i++) {
+					m = L[i].id.match(/(id_form-)(\d+)(.*)/);
+					L[i].id = m[1]+(Number(m[2])+1).toFixed(0)+m[3]
+					L[i].value = "";
+				}
+				$(this).parent().parent().prev().after(newLineItem);
+				newLineItem.children("td.lineItemAmount").children().change(calcVAT);
+				var C = $("input#id_form-TOTAL_FORMS");
+				C.val((Number(C.val())+1).toFixed(0));
 			});
 		});
 	</script>
@@ -29,12 +43,13 @@
             <tr><th>Description</th><th>Amount</th><th>Vat</th></tr>
             {% for f in lineforms %}
                 <tr>
-                    <td>{{f.id}}{{f.description}}</td><td class='lineItemAmount'>{{f.amount}}</td><td>{{f.vat}}</td>
+                    <td>{{f.id}}{{f.description}}</td><td class='lineItemAmount'>{{f.amount}}</td><td class='lineItemVAT'>{{f.vat}}</td>
                 </tr>
             {% endfor %}
+			<tr><td colspan=3 style='text-align: center;'><input id='newLineItemTrigger' type='button' value='Add another line'/></td></tr>
         </table>
 
-        <input type=submit value="submit"/>
+        <input type=submit value="Submit"/>
     </form>
 
 {% endblock %}
