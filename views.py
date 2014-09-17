@@ -192,7 +192,7 @@ def send_invoice(request):
     check_perm(request, 'canSendInvoice')
     if request.method == "GET":
         form = forms.SendInvoiceForm(initial={'date':datetime.date.today()})
-        lineForms = forms.InvoiceLinesFormSet()
+        lineForms = forms.InvoiceLinesFormSet(queryset=models.InvoiceLine.objects.none())
     elif request.method == "POST":
         #Get client, date, invoice lines
         form = forms.SendInvoiceForm(request.POST)
@@ -207,6 +207,7 @@ def send_invoice(request):
             sourceDoc.client = client
             sourceDoc.save()
             for lineItem in lineForms.save(commit=False):
+                print lineItem
                 #lineItem = l.save(commit=False)
                 lineItem.invoice = sourceDoc
                 lineItem.save()
