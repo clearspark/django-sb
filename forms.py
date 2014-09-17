@@ -52,10 +52,10 @@ class InvoiceLineForm(forms.ModelForm):
         model = models.InvoiceLine
         fields = ('description', 'amount', 'vat')
         widgets = {
-                'description': forms.TextInput(attrs={'size':60})
-                }
+            'description': forms.TextInput(attrs={'size':60})
+        }
 
-InvoiceLinesFormSet = modelformset_factory(models.InvoiceLine, form=InvoiceLineForm, extra=6)
+InvoiceLinesFormSet = modelformset_factory(models.InvoiceLine, form=InvoiceLineForm, extra=2)
 
 class GetInvoiceForm(forms.Form):
     vendor = forms.ModelChoiceField(models.Account.objects.filter(parent__name="Creditors"))
