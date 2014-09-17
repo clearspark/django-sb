@@ -135,7 +135,7 @@ class SourceDoc(models.Model):
             return False
 
 def get_new_invoice_nr(client):
-    num = Invoice.objects.filter(client=client).count() + 1
+    num = Invoice.objects.filter(client=client).count() + 71
     return "CS%04d-%s" %(num, client.invoice_suffix)
 
 class Invoice(SourceDoc):
@@ -160,6 +160,8 @@ class InvoiceLine(models.Model):
     description = models.CharField(max_length=1000)
     amount = models.DecimalField(max_digits=16, decimal_places=2)
     vat = models.DecimalField(max_digits=16, decimal_places=2)
+    class Meta:
+        ordering = ['pk']
 
 class Transaction(models.Model):
     debitAccount = models.ForeignKey("Account", related_name="debits")
