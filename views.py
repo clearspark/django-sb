@@ -207,7 +207,6 @@ def send_invoice(request):
             sourceDoc.client = client
             sourceDoc.save()
             for lineItem in lineForms.save(commit=False):
-                print lineItem
                 #lineItem = l.save(commit=False)
                 lineItem.invoice = sourceDoc
                 lineItem.save()
