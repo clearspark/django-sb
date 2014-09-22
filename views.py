@@ -267,7 +267,7 @@ def get_invoice(request):
                     amount = tform.cleaned_data['amount'] * Decimal('0.14')
                 elif tform.cleaned_data['vat']=='specify':
                     amount = tform.cleaned_data['VATAmount']
-                vat = models.Account.objects.get(name='VAT')
+                vat = models.Account.objects.get(name='Input VAT')
                 t2 = models.Transaction(
                     debitAccount=vat,
                     creditAccount=tform.cleaned_data['vendor'],
