@@ -225,7 +225,7 @@ def send_invoice(request):
                 isConfirmed = True).save()
             vat_amount = sourceDoc.get_total_vat()
             if vat_amount > 0:
-                vat = models.Account.objects.get(name='VAT')
+                vat = models.Account.objects.get(name='Output VAT')
                 models.Transaction(
                     debitAccount=form.cleaned_data['client'].account,
                     creditAccount=vat,
