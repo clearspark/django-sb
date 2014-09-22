@@ -5,6 +5,10 @@ class TransactionInline(admin.StackedInline):
     model = models.Transaction
     extra = 2
 
+class InvoiceLineInline(admin.StackedInline):
+    model = models.InvoiceLine
+    extra = 2
+
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ["date", "isConfirmed", "debitAccount", "creditAccount", "amount", "sourceDocument", "comments"]
     list_filter = ["date",  "debitAccount", "creditAccount"]
@@ -17,7 +21,7 @@ class TransactionAdmin(admin.ModelAdmin):
 class SourceDocAdmin(admin.ModelAdmin):
     list_display = ["number", "transaction_count", "has_file", 'docType']
     list_editable = ['docType']
-    list_filter = ['docType']
+    list_filter = ['docType', 'transactions__debitAccount', 'transactions__creditAccount']
     inlines = [TransactionInline]
     save_on_top = True
     def save_model(self, request, obj, form, change):
@@ -35,8 +39,16 @@ class AccountAdmin(admin.ModelAdmin):
     list_display = ["long_name", "name", "cat", "balance", "dt_count", "ct_count"]
     list_filter = ["parent", "cat"]
 
+class InvoiceAdmin(admin.ModelAdmin):
+    list_display = ['number', 'client']
+    list_filter = ['client']
+    inlines = [InvoiceLineInline]
+
 admin.site.register(models.Account, AccountAdmin)
 admin.site.register(models.Transaction, TransactionAdmin)
 admin.site.register(models.SourceDoc, SourceDocAdmin)
 admin.site.register(models.Asset)
 admin.site.register(models.Bookie)
+admin.site.register(models.Client)
+admin.site.register(models.Invoice, InvoiceAdmin)
+admin.site.register(models.InvoiceLine)

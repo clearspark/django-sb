@@ -1,0 +1,13 @@
+{% extends "sb/base.html" %}
+
+{% block sbContent %}
+<h1>{{heading}}</h2>
+<form action="" method="POST">
+    {% csrf_token %}
+    <table class='form-table'>
+        {{form}}
+    </table>
+    <input type=submit value="submit"/>
+</form>
+
+{% endblock %}

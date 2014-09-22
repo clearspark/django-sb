@@ -1,12 +1,15 @@
 import csv
 import datetime
-
 from decimal import Decimal
+import calendar
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404, HttpResponse
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
+from django.template import Template, Context
 
 from sb import models, forms
 # Create your views here.
@@ -189,41 +192,53 @@ def send_invoice(request):
     check_perm(request, 'canSendInvoice')
     if request.method == "GET":
         form = forms.SendInvoiceForm(initial={'date':datetime.date.today()})
+        lineForms = forms.InvoiceLinesFormSet(queryset=models.InvoiceLine.objects.none())
     elif request.method == "POST":
+        #Get client, date, invoice lines
         form = forms.SendInvoiceForm(request.POST)
-        if form.is_valid():
-            sourceDoc = models.SourceDoc()
-            sourceDoc.number = models.get_new_invoice_nr()
+        lineForms = forms.InvoiceLinesFormSet(request.POST)
+        if form.is_valid() and lineForms.is_valid():
+            client = form.cleaned_data['client']
+            sourceDoc = models.Invoice()
+            sourceDoc.number = models.get_new_invoice_nr(client)
             sourceDoc.recordedBy = request.user
             sourceDoc.comments = form.cleaned_data['comments']
             sourceDoc.docType = 'invoice-out'
+            sourceDoc.client = client
+            sourceDoc.save()
+            for lineItem in lineForms.save(commit=False):
+                #lineItem = l.save(commit=False)
+                lineItem.invoice = sourceDoc
+                lineItem.save()
+            sourceDoc.html = sourceDoc.make_html()
             sourceDoc.save()
             sales = models.Account.objects.get(name='Sales')
+            amount = sourceDoc.get_total_excl()
             models.Transaction(
-                debitAccount=form.cleaned_data['client'],
+                debitAccount=form.cleaned_data['client'].account,
                 creditAccount=sales,
-                amount=form.cleaned_data['amount'],
+                amount=amount,
                 date=form.cleaned_data['date'],
                 recordedBy=request.user,
                 sourceDocument=sourceDoc,
                 comments="",
                 isConfirmed = True).save()
-            if form.cleaned_data['vat']:
-                vat = models.Account.objects.get(name='Output VAT')
+            vat_amount = sourceDoc.get_total_vat()
+            if vat_amount > 0:
+                vat = models.Account.objects.get(name='VAT')
                 models.Transaction(
-                    debitAccount=form.cleaned_data['client'],
+                    debitAccount=form.cleaned_data['client'].account,
                     creditAccount=vat,
-                    amount=form.cleaned_data['amount'] * Decimal('0.14'),
+                    amount=vat_amount,
                     date=form.cleaned_data['date'],
                     recordedBy=request.user,
                     sourceDocument=sourceDoc,
                     comments="",
                     isConfirmed = True).save()
-            #Read data
             return redirect(sourceDoc)
     return render(request, "sb/send_invoice.html", 
-            {'form': form})
-    
+            {'form': form, 'lineforms': lineForms})
+
 @login_required
 def get_invoice(request):
     check_perm(request, 'canReceiveInvoice')
@@ -312,4 +327,100 @@ def extract(request, dataType):
         for a in models.Account.objects.order_by('gl_code').all():
             writer.writerow( [a.gl_code, a.long_name(), a.get_cat_display(), a.statement_type(), a.dt_sum(begin=begin, end=end), a.ct_sum(begin, end), a.balance(begin=begin, end=end)] )
         return response
+
+@login_required
+def apply_interest(request):
+    check_perm(request, 'canApplyInterest')
+    if request.method == "POST":
+        form = forms.InterestForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            last_day = calendar.monthrange(data['year'], data['month'])[1]
+            begin = datetime.date(data['year'], data['month'], 1)
+            end = datetime.date(data['year'], data['month'], last_day)
+            sourceDoc = models.SourceDoc(number=data['docNumber'],
+                    recordedBy=request.user,
+                    docType='other'
+                    )
+            sourceDoc.save()
+            for a in data['accounts']:
+                balance = a.get_average_balance(begin, end)
+                interest_amount = abs(balance * data['rate'] / Decimal("12.0"))
+                t = models.Transaction(debitAccount=data['expense'],
+                        creditAccount=a,
+                        date=data['date'],
+                        amount=interest_amount,
+                        recordedBy=request.user,
+                        sourceDocument=sourceDoc)
+                t.save()
+            return redirect(sourceDoc)
+
+    else:
+        form = forms.InterestForm()
+    return render(request, 'sb/generic_form.html', {'form': form, 'heading': "Apply Interest"})
+
+@login_required
+def client_account_statement(request):
+    form = forms.ClientStatementForm(request.GET or None)
+    if form.is_valid():
+        client = form.cleaned_data['client']
+        if not client.adminGoup.user_set.filter(pk=request.user.pk).exists():
+            raise PermissionDenied
+        account = client.account
+        statementDate = form.cleaned_data['statementDate']
+        startDate = form.cleaned_data['startDate']
+        starting_balance = account.balance(end=startDate - datetime.timedelta(days=1))
+        rows = []
+        rows.append(['', startDate, 'Balance carried over', '', '', starting_balance])
+        transactions = account.get_transactions(begin=startDate, end=statementDate)
+        balance = starting_balance
+        for t in transactions:
+            if t.debitAccount == account:
+                balance += t.amount
+                rows.append([t.sourceDocument.number, t.date, t.comments, t.amount, '', balance])
+            else:
+                balance -= t.amount
+                rows.append([t.sourceDocument.number, t.date, t.comments, '', t.amount, balance])
+        debits = account.get_debits().order_by('-date')
+        current = Decimal('0.00')
+        days_31_60 = Decimal('0.00')
+        days_61_90 = Decimal('0.00')
+        days_90_plus = Decimal('0.00')
+        for d in debits:
+            days_ago = statementDate - d.date
+            amount = min(balance, d.amount)
+            if  days_ago < datetime.timedelta(days=31):
+                current += amount
+            elif days_ago < datetime.timedelta(days=61):
+                days_31_60 += amount
+            elif days_ago < datetime.timedelta(days=91):
+                days_61_90 += amount
+            else:
+                days_90_plus += amount
+            balance -= d.amount
+            if balance <= Decimal('0.00'):
+                break
+
+
+        t = Template(client.statementTemplate)
+        c = Context({'rows': rows,
+            'current': current,
+            'days_31_60': days_31_60,
+            'days_61_90': days_61_90,
+            'days_90_plus': days_90_plus})
+        response = HttpResponse(t.render(c))
+        return response
+    else:
+        return render(request, 'sb/client_statements_menu.html', {'form': form})
+    
+
+def view_invoice(request, invoice_nr):
+    invoice = get_object_or_404(models.Invoice, number=invoice_nr)
+    client = invoice.client
+    if not client.adminGoup.user_set.filter(pk=request.user.pk).exists():
+        raise PermissionDenied
+    if request.GET.get('generate', False):
+        return HttpResponse(invoice.make_html())
+    else:
+        return HttpResponse(invoice.html)
 

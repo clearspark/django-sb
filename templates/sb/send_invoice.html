@@ -2,11 +2,27 @@
 
 {% block sbContent %}
     <h1>Sending new invoice</h2>
-    <form action="" method="POST" enctype="multipart/form-data">
+    <form action="" method="POST">
         {% csrf_token %}
+        <h2>General</h2>
         <table class='form-table'>
             {{form}}
         </table>
+        <h2>Line items</h2>
+        <p class="help-text">
+            Please try to keep invoices to a reasonable amount of line items as it may not fit on one page if there are too many.
+        </p>
+
+        {{lineforms.management_form}}
+        <table>
+            <tr><th>Description</th><th>Amount</th><th>Vat</th></tr>
+            {% for f in lineforms %}
+                <tr>
+                    <td>{{f.id}}{{f.description}}</td><td>{{f.amount}}</td><td>{{f.vat}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+
         <input type=submit value="submit"/>
     </form>
 

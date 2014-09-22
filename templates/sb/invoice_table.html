@@ -1,0 +1,28 @@
+<table cellpadding="1" cellspacing="1" style="width:1000px">
+    <thead>
+        <tr>
+            <th scope="col" style="text-align:left; width:800px">Description</th>
+            <th scope="col" style="text-align:right">Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for li in invoice.invoiceline_set.all %}
+        <tr>
+            <td>{{li.description}}</td>
+            <td style="text-align:right">{{li.amount}}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td style="text-align:right"><strong>Total excluding VAT</strong></td>
+            <td style="text-align:right">{{invoice.get_total_excl}}</td>
+        </tr>
+        <tr>
+            <td style="text-align:right"><strong>VAT</strong></td>
+            <td style="text-align:right">{{invoice.get_total_vat}}</td>
+        </tr>
+        <tr>
+            <td style="text-align:right"><strong>Total including VAT</strong></td>
+            <td style="text-align:right">{{invoice.get_total_incl}}</td>
+        </tr>
+    </tbody>
+</table>
