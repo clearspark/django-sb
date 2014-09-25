@@ -130,7 +130,7 @@ def add_payslip(request):
             paye = models.Account.objects.get(name="PAYE")
             uif = models.Account.objects.get(name="UIF")
             sdl = models.Account.objects.get(name="SDL")
-            sars = models.Account.objects.get(name="SARS")
+            sars = models.Account.objects.get(name="SARS - PAYE")
             bonusses = models.Account.objects.get(name="Bonusses")
             #generate transactions
             if payeAmount:
