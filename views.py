@@ -414,7 +414,7 @@ def client_account_statement(request):
     else:
         return render(request, 'sb/client_statements_menu.html', {'form': form})
     
-
+@login_required
 def view_invoice(request, invoice_nr):
     invoice = get_object_or_404(models.Invoice, number=invoice_nr)
     client = invoice.client

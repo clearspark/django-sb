@@ -1,7 +1,8 @@
-<table cellpadding="1" cellspacing="1" style="width:1000px">
+{% load humanize %}
+<table class="invoice-table" style="width:100%">
     <thead>
         <tr>
-            <th scope="col" style="text-align:left; width:800px">Description</th>
+            <th scope="col" style="text-align:left;">Description</th>
             <th scope="col" style="text-align:right">Amount</th>
         </tr>
     </thead>
@@ -9,20 +10,20 @@
         {% for li in invoice.invoiceline_set.all %}
         <tr>
             <td>{{li.description}}</td>
-            <td style="text-align:right">{{li.amount}}</td>
+            <td style="text-align:right">R&nbsp;{{li.amount|intcomma}}</td>
         </tr>
         {% endfor %}
         <tr>
-            <td style="text-align:right"><strong>Total excluding VAT</strong></td>
-            <td style="text-align:right">{{invoice.get_total_excl}}</td>
+            <td style="text-align:right"><strong>Total excl VAT</strong></td>
+            <td style="text-align:right">R&nbsp;{{invoice.get_total_excl|intcomma}}</td>
         </tr>
         <tr>
             <td style="text-align:right"><strong>VAT</strong></td>
-            <td style="text-align:right">{{invoice.get_total_vat}}</td>
+            <td style="text-align:right">R&nbsp;{{invoice.get_total_vat|intcomma}}</td>
         </tr>
         <tr>
-            <td style="text-align:right"><strong>Total including VAT</strong></td>
-            <td style="text-align:right">{{invoice.get_total_incl}}</td>
+            <td style="text-align:right"><strong>Total incl VAT</strong></td>
+            <td style="text-align:right">R&nbsp;{{invoice.get_total_incl|intcomma}}</td>
         </tr>
     </tbody>
 </table>

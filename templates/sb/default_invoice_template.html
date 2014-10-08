@@ -1,55 +1,89 @@
-<table cellpadding="1" cellspacing="1" style="width:1000px">
-    <tbody>
-    <tr>
-        <td style="vertical-align:top; width:500px">
-            <p><big><strong>ClearSpark (PTY) Ltd</strong></big></p>
+<html>
+    <head>
+        <style type="text/css">
+            body {
+                font-family: Tahoma;
+                font: normal 14px arial, sans-serif;
+                color: #444;
+            }
+            .wrapper {
+                //border-radius:12px;
+                //#border-style: solid;
+                //#border-color: grey;
+                //border-width: 2.8px;
+                padding: 10px;
+                width: 640px;
+                position: relative;
+            }
+            h1 {
+                color: #666;
+                font-size: 26px;
+            }
+            table.invoice-table {
+                border-collapse: collapse;
+            }
 
-            <p><big>Reg# 2012/035520/07</big></p>
+            table.invoice-table td, th {
+                border: 1px solid #AAA;
+                padding: 3px;
+            }
 
-            <p><big>VAT# 4390264523</big></p>
+        </style>
+    </head>
+    <body>
+        <div class="wrapper">
+            <h1 style="text-align:right">TAX INVOICE</h1>
+            <table cellpadding="1" cellspacing="1" style="width:100%">
+                <tbody>
+                <tr>
+                    <td style="vertical-align:top; width:300px">
+                        <p><strong>ClearSpark (PTY) Ltd</strong></p>
 
-            <p><big>89 Roodebloem Road<br />
-                Woodstock<br />
-                Cape Town<br />
-                7925</big></p>
+                        <p>Reg# 2012/035520/07</p>
 
-            <p><big>Cell# 074 274 8271</big></p>
-        </td>
-        <td style="vertical-align:top; width:500px">
-            <h2 style="text-align:right"><big>TAX INVOICE</big></h2>
+                        <p>VAT# 4390264523</p>
 
-            <p>&nbsp;</p>
+                        <p>89 Roodebloem Road<br />
+                            Woodstock<br />
+                            Cape Town<br />
+                            7925</p>
 
-            <p style="text-align:right"><big>Invoice# {{invoice.number}}</big></p>
+                        <p>Cell# 074 274 8271</p>
+                    </td>
+                    <td style="vertical-align:top; width:300px">
+                        <p style="text-align:right">Invoice# {{invoice.number}}</p>
 
-            <p style="text-align:right"><big>Invoice date: &nbsp;{{invoice.invoiceDate}}</big></p>
-        </td>
-    </tr>
-    <tr>
-        <td style="vertical-align:top">
-            <p><big>To:</big></p>
+                        <p style="text-align:right">Invoice date: &nbsp;{{invoice.invoiceDate}}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="vertical-align:top; width: 50%;">
+                        <p>To:</p>
 
-            {{invoice.client.address|safe}}
-            <p>&nbsp;</p>
-        </td>
-        <td style="vertical-align:top">
-            <p><big>For: One sentence description of product eg goods and services delivered in May</big></p>
-        </td>
-    </tr>
-    </tbody>
-</table>
+                        {{invoice.client.address|safe}}
+                        <p>&nbsp;</p>
+                    </td>
+                    <td style="vertical-align:top">
+                        <p>For: One sentence description of product eg goods and services delivered in May</p>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
 
-{% include "sb/invoice_table.html" %}
-<div style="width: 1000px;">
-    <p>Terms and conditions:</p>
+            {% include "sb/invoice_table.html" %}
+            <div>
+                <p><strong>Terms and conditions:</strong></p>
 
-    <p>Invoices are payable in full within 30 days of invoice date. &nbsp;Amounts over 30 days in arrears will attract interest at a rate of 12% p/a, compounded monthly. &nbsp;Payments will be set off against the oldest unpiad invoice first.</p>
+                <p>Invoices are payable in full within 30 days of invoice date. &nbsp;Amounts over 30 days in arrears will attract interest at a rate of 12% p/a, compounded monthly. &nbsp;Payments will be set off against the oldest unpaid invoice first.</p>
 
-    <p>Payment details:</p>
+                <p><strong>Payment details:</strong></p>
 
-    <p>ClearSpark (Pty) Ltd<br />
-    FNB Business Cheque Account<br />
-    Acc #: 623 5021 7446<br />
-    Branch: Tygerberg<br />
-    Branch Code: 201410</p>
-</div>
+                <p>ClearSpark (Pty) Ltd<br />
+                FNB Business Cheque Account<br />
+                Acc #: 623 5021 7446<br />
+                Branch: Tygerberg<br />
+                Branch Code: 201410</p>
+            </div>
+        </div>
+    </body>
+</html>
