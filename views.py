@@ -200,9 +200,10 @@ def send_invoice(request):
         if form.is_valid() and lineForms.is_valid():
             client = form.cleaned_data['client']
             sourceDoc = models.Invoice()
-            sourceDoc.number = models.get_new_invoice_nr(client)
+            sourceDoc.number = client.get_new_invoice_nr()
             sourceDoc.recordedBy = request.user
             sourceDoc.comments = form.cleaned_data['comments']
+            sourceDoc.date = form.cleaned_data['date']
             sourceDoc.docType = 'invoice-out'
             sourceDoc.client = client
             sourceDoc.save()

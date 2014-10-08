@@ -1,0 +1,55 @@
+<table cellpadding="1" cellspacing="1" style="width:1000px">
+    <tbody>
+    <tr>
+        <td style="vertical-align:top; width:500px">
+            <p><big><strong>ClearSpark (PTY) Ltd</strong></big></p>
+
+            <p><big>Reg# 2012/035520/07</big></p>
+
+            <p><big>VAT# 4390264523</big></p>
+
+            <p><big>89 Roodebloem Road<br />
+                Woodstock<br />
+                Cape Town<br />
+                7925</big></p>
+
+            <p><big>Cell# 074 274 8271</big></p>
+        </td>
+        <td style="vertical-align:top; width:500px">
+            <h2 style="text-align:right"><big>TAX INVOICE</big></h2>
+
+            <p>&nbsp;</p>
+
+            <p style="text-align:right"><big>Invoice# {{invoice.number}}</big></p>
+
+            <p style="text-align:right"><big>Invoice date: &nbsp;{{invoice.invoiceDate}}</big></p>
+        </td>
+    </tr>
+    <tr>
+        <td style="vertical-align:top">
+            <p><big>To:</big></p>
+
+            {{invoice.client.address|safe}}
+            <p>&nbsp;</p>
+        </td>
+        <td style="vertical-align:top">
+            <p><big>For: One sentence description of product eg goods and services delivered in May</big></p>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+{% include "sb/invoice_table.html" %}
+<div style="width: 1000px;">
+    <p>Terms and conditions:</p>
+
+    <p>Invoices are payable in full within 30 days of invoice date. &nbsp;Amounts over 30 days in arrears will attract interest at a rate of 12% p/a, compounded monthly. &nbsp;Payments will be set off against the oldest unpiad invoice first.</p>
+
+    <p>Payment details:</p>
+
+    <p>ClearSpark (Pty) Ltd<br />
+    FNB Business Cheque Account<br />
+    Acc #: 623 5021 7446<br />
+    Branch: Tygerberg<br />
+    Branch Code: 201410</p>
+</div>

@@ -42,7 +42,7 @@ class AccountAdmin(admin.ModelAdmin):
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = ['number', 'client']
     list_filter = ['client']
-    inlines = [InvoiceLineInline]
+    inlines = [InvoiceLineInline, TransactionInline]
 
 admin.site.register(models.Account, AccountAdmin)
 admin.site.register(models.Transaction, TransactionAdmin)

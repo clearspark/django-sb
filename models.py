@@ -8,6 +8,7 @@ from django.template import Template, Context
 ACCOUNT_CATEGORIES = (("equity", "Equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense"))
 INCOME_STATEMENT_CATS = ('income', 'expense',)
 BALANCE_SHEET_CATS = ('equity', 'asset', 'liability',)
+
 # Create your models here.
 class Account(models.Model):
     name = models.CharField(max_length=200)
@@ -99,11 +100,17 @@ class Client(models.Model):
     account = models.ForeignKey('Account')
     adminGoup = models.ForeignKey('auth.Group')
     displayName = models.CharField(max_length=100)
-    invoiceTemplate = models.TextField(blank=True)
+    invoiceTemplate = models.TextField(blank=True, default='{% include "sb/default_invoice_template.html" %}')
     statementTemplate = models.TextField(blank=True)
-    invoice_suffix = models.CharField(max_length=12)
+    invoiceSuffix = models.CharField(max_length=12)
+    invoiceOffset = models.IntegerField(default=0, help_text='''The invoice number will be increaced by this number.
+    The reason this is needed is that not all invoices in the database are explicitly represented as such and this ''' )
+    address = models.TextField(help_text="This will be used for generating invoices and statements. HTML tags can be used. Should include Company name, registration, VAT nr etc.")
     def __unicode__(self):
         return self.displayName
+    def get_new_invoice_nr(self):
+        num = self.invoice_set.count() + self.invoiceOffset + 1
+        return "CS%04d-%s" %(num, self.invoiceSuffix)
 
 def source_doc_file_path(instance, filename):
     return "sb/src_docs/{}/{}".format(instance.number, filename)
@@ -134,13 +141,10 @@ class SourceDoc(models.Model):
         else:
             return False
 
-def get_new_invoice_nr(client):
-    num = Invoice.objects.filter(client=client).count() + 71
-    return "CS%04d-%s" %(num, client.invoice_suffix)
-
 class Invoice(SourceDoc):
     client = models.ForeignKey('Client')
     html = models.TextField(blank=True)
+    invoiceDate = models.DateField()
     finalized = models.BooleanField(default=False)
     def __unicode__(self):
         return self.number
