@@ -18,6 +18,7 @@
             h1 {
                 color: #666;
                 font-size: 26px;
+                text-align: right;
             }
             table.invoice-table {
                 border-collapse: collapse;
@@ -28,15 +29,19 @@
                 padding: 3px;
             }
 
+            td {
+                vertical-align: top;
+            }
+
         </style>
     </head>
     <body>
         <div class="wrapper">
-            <h1 style="text-align:right">TAX INVOICE</h1>
+            <h1>TAX INVOICE</h1>
             <table cellpadding="1" cellspacing="1" style="width:100%">
                 <tbody>
                 <tr>
-                    <td style="vertical-align:top; width:300px">
+                    <td style="width:300px">
                         <p><strong>ClearSpark (PTY) Ltd</strong></p>
 
                         <p>Reg# 2012/035520/07</p>
@@ -48,23 +53,25 @@
                             Cape Town<br />
                             7925</p>
 
-                        <p>Cell# 074 274 8271</p>
+                        <p>Phone# 074 274 8271</p>
+                        &nbsp;
                     </td>
-                    <td style="vertical-align:top; width:300px">
+                    <td style="width:300px">
                         <p style="text-align:right">Invoice# {{invoice.number}}</p>
 
                         <p style="text-align:right">Invoice date: &nbsp;{{invoice.invoiceDate}}</p>
                     </td>
                 </tr>
                 <tr>
-                    <td style="vertical-align:top; width: 50%;">
+                    <td style="width: 50%;">
                         <p>To:</p>
 
                         {{invoice.client.address|safe}}
                         <p>&nbsp;</p>
                     </td>
-                    <td style="vertical-align:top">
-                        <p>For: One sentence description of product eg goods and services delivered in May</p>
+                    <td style="padding-left: 10px">
+                        <p>For:</p>
+                        <p> {{invoice.clientSummary|safe}}</p>
                     </td>
                 </tr>
                 </tbody>

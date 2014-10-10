@@ -44,8 +44,13 @@ class DateRangeFilter(forms.Form):
 
 class SendInvoiceForm(forms.Form):
     client = forms.ModelChoiceField(models.Client.objects.all())
-    date = forms.DateField()
-    comments = forms.CharField(required=False, widget=forms.Textarea())
+    date = forms.DateField(required=True)
+    comments = forms.CharField(required=False, widget=forms.Textarea(attrs={'cols': 90}),
+            help_text="Goes in accounting app, client does not see this.")
+    clientSummary = forms.CharField(max_length=200, required=True,
+            widget = forms.Textarea(attrs={'cols': 90, 'rows': 2, 'maxlength': 200}),
+            help_text="Summary for Client. HTML styling tags can be used.")
+        
 
 class InvoiceLineForm(forms.ModelForm):
     class Meta:

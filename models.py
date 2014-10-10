@@ -119,7 +119,7 @@ class SourceDoc(models.Model):
     electronicCopy = models.FileField(upload_to=source_doc_file_path, blank=True, null=True, verbose_name="Electronic copy")
     recordedTime = models.DateTimeField(auto_now=True)
     recordedBy = models.ForeignKey("auth.User", editable=False)
-    comments = models.TextField(blank=True)
+    comments = models.TextField(blank=True, help_text="Any comments/extra info/meta data about this doc.")
     docType = models.CharField(max_length=20, choices=(
         ('bank-statement', 'Bank statement'),
         ('invoice-out', 'Outbound invoice'),
@@ -146,6 +146,8 @@ class Invoice(SourceDoc):
     html = models.TextField(blank=True)
     invoiceDate = models.DateField()
     finalized = models.BooleanField(default=False)
+    clientSummary = models.CharField(max_length=200,
+            help_text='One or two sentence description of what invoice is for.  Will shown on invoice above line items. Possibly on statements.')
     def __unicode__(self):
         return self.number
     def get_total_excl(self):

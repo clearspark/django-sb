@@ -203,7 +203,8 @@ def send_invoice(request):
             sourceDoc.number = client.get_new_invoice_nr()
             sourceDoc.recordedBy = request.user
             sourceDoc.comments = form.cleaned_data['comments']
-            sourceDoc.date = form.cleaned_data['date']
+            sourceDoc.invoiceDate = form.cleaned_data['date']
+            sourceDoc.clientSummary = form.cleaned_data['clientSummary']
             sourceDoc.docType = 'invoice-out'
             sourceDoc.client = client
             sourceDoc.save()
