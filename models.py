@@ -9,6 +9,10 @@ ACCOUNT_CATEGORIES = (("equity", "Equity"), ("asset", "Asset"), ("liability", "L
 INCOME_STATEMENT_CATS = ('income', 'expense',)
 BALANCE_SHEET_CATS = ('equity', 'asset', 'liability',)
 
+def url_to_edit_object(object):
+    url = reverse('admin:%s_%s_change' %(object._meta.app_label,  object._meta.module_name),  args=[object.id] )
+    return url
+
 # Create your models here.
 class Account(models.Model):
     name = models.CharField(max_length=200)
@@ -140,6 +144,11 @@ class SourceDoc(models.Model):
             return True
         else:
             return False
+    def edit_url(self):
+        if hasattr(self, 'invoice'):
+            return url_to_edit_object(self.invoice)
+        else:
+            return url_to_edit_object(self)
 
 class Invoice(SourceDoc):
     client = models.ForeignKey('Client')
