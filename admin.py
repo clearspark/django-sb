@@ -36,7 +36,7 @@ class SourceDocAdmin(admin.ModelAdmin):
         formset.save_m2m()
 
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ["long_name", "name", "cat", "balance", "dt_count", "ct_count"]
+    list_display = ["long_name", "name", "cat", "balance", "dt_count", "ct_count", 'gl_code']
     list_filter = ["parent", "cat"]
 
 class InvoiceAdmin(admin.ModelAdmin):

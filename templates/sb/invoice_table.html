@@ -10,20 +10,20 @@
         {% for li in invoice.invoiceline_set.all %}
         <tr>
             <td>{{li.description}}</td>
-            <td style="text-align:right">R&nbsp;{{li.amount|intcomma}}</td>
+            <td style="text-align:right">R&nbsp;{{li.amount|floatformat:2|intcomma}}</td>
         </tr>
         {% endfor %}
         <tr>
             <td style="text-align:right"><strong>Total excl VAT</strong></td>
-            <td style="text-align:right">R&nbsp;{{invoice.get_total_excl|intcomma}}</td>
+            <td style="text-align:right">R&nbsp;{{invoice.get_total_excl|floatformat:2|intcomma}}</td>
         </tr>
         <tr>
             <td style="text-align:right"><strong>VAT</strong></td>
-            <td style="text-align:right">R&nbsp;{{invoice.get_total_vat|intcomma}}</td>
+            <td style="text-align:right">R&nbsp;{{invoice.get_total_vat|floatformat:2|intcomma}}</td>
         </tr>
         <tr>
             <td style="text-align:right"><strong>Total incl VAT</strong></td>
-            <td style="text-align:right">R&nbsp;{{invoice.get_total_incl|intcomma}}</td>
+            <td style="text-align:right">R&nbsp;{{invoice.get_total_incl|floatformat:2|intcomma}}</td>
         </tr>
     </tbody>
 </table>
