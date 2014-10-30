@@ -34,6 +34,8 @@ def account_details(request, pk):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
     account = get_object_or_404(models.Account, pk=pk)
+    if account.cat in models.INTERNAL_SHEET_CATS:
+        account = get_object_or_404(models.CostCentre, pk=pk)
     account.period_transactions = account.get_transactions(begin, end)
     account.period_dt_sum = account.dt_sum(begin, end)
     account.period_ct_sum = account.ct_sum(begin, end)
@@ -87,14 +89,17 @@ def trial_balance(request):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
     def annotate(cat):
-        accounts = list(models.Account.objects.filter(cat=cat).all())
+        if not cat in models.INTERNAL_SHEET_CATS:
+            accounts = list(models.Account.objects.filter(cat=cat).all())
+        else:
+            accounts = list(models.CostCentre.objects.filter(cat=cat).all())
         for a in accounts:
             a.period_dt_sum = a.dt_sum(begin, end)
             a.period_ct_sum = a.ct_sum(begin, end)
             a.period_balance = a.balance(begin, end)
         return accounts
     accGroups = [ {'cat': cat[1], 'accounts': annotate(cat[0])}
-                for cat in models.ACCOUNT_CATEGORIES]
+                for cat in models.ALL_ACCOUNT_CATEGORIES]
     for g in accGroups:
         g['total'] = sum([ a.period_balance for a in g['accounts']])
     accountDict = {"account_groups": accGroups, 'dateform': dateform}
@@ -124,14 +129,15 @@ def add_payslip(request):
             payeAmount = pdata["paye"]
             uifAmount = pdata.get("uif", None)
             bonusAmount = pdata.get("bonus", None)
-            print(bonusAmount)
-
+            costCentre = pdata["department"].costCentre
             salaries = models.Account.objects.get(name="Salaries")
             paye = models.Account.objects.get(name="PAYE")
             uif = models.Account.objects.get(name="UIF")
             sdl = models.Account.objects.get(name="SDL")
             sars = models.Account.objects.get(name="SARS - PAYE")
             bonusses = models.Account.objects.get(name="Bonusses")
+            #Initiate tracking variable
+            costToCompany = grossAmount
             #generate transactions
             if payeAmount:
                 #Increace employee account with paye ammount
@@ -143,7 +149,7 @@ def add_payslip(request):
                         amount=payeAmount, date=date, recordedBy=request.user,
                         sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
             else:
-                payeAmount = Decimal('0.0')
+                payeAmount = Decimal('0.00')
             if uifAmount:
                 #Increace employee account with paye ammount
                 models.Transaction(debitAccount=uif, creditAccount=employee,
@@ -157,9 +163,9 @@ def add_payslip(request):
                 models.Transaction(debitAccount=uif, creditAccount=sars,
                         amount=uifAmount, date=date, recordedBy=request.user,
                         sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
-
+                costToCompany += uifAmount
             else:
-                uifAmount = Decimal('0.0')
+                uifAmount = Decimal('0.00')
             #Increace employee account with nett salary
             nett = grossAmount - payeAmount - uifAmount
             models.Transaction(debitAccount=salaries, creditAccount=employee,
@@ -170,11 +176,17 @@ def add_payslip(request):
             models.Transaction(debitAccount=sdl, creditAccount=sars,
                     amount=sdlAmount, date=date, recordedBy=request.user,
                     sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+            costToCompany += sdlAmount
             #Increace employee account with bonus amount
             if bonusAmount:
                 models.Transaction(debitAccount=bonusses, creditAccount=employee,
                         amount=bonusAmount, date=date, recordedBy=request.user,
                         sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+                costToCompany += bonusAmount
+            #Create cost centre transaction
+            models.CCTransaction(debitAccount=salaries, creditAccount=costCentre,
+                    amount=costToCompany, date=date, recordedBy=request.user,
+                    sourceDocument=sourceDoc, comments="", isConfirmed=True).save()
             for rform in rforms:
                 account = rform.cleaned_data.get('account', None)
                 if account is not None:
@@ -182,6 +194,11 @@ def add_payslip(request):
                             creditAccount=employee, amount=rform.cleaned_data['amount'],
                             date=date, recordedBy=request.user, sourceDocument=sourceDoc,
                             comments="", isConfirmed = True).save()
+                    models.CCTransaction(debitAccount=account,
+                            creditAccount=costCentre, amount=rform.cleaned_data['amount'],
+                            date=date, recordedBy=request.user, sourceDocument=sourceDoc,
+                            comments="", isConfirmed = True).save()
+
             return redirect(sourceDoc)
     return render(request, "sb/payslip_form.html", 
             {'pform': pform, 'dform': dform, 'rforms': rforms})
@@ -225,6 +242,16 @@ def send_invoice(request):
                 sourceDocument=sourceDoc,
                 comments="",
                 isConfirmed = True).save()
+            cc_amount = amount - (amount * form.cleaned_data["department"].invoiceDeductionFraction)
+            models.CCTransaction(
+                debitAccount=form.cleaned_data['department'].costCentre,
+                creditAccount=sales,
+                amount=cc_amount,
+                date=form.cleaned_data['date'],
+                recordedBy=request.user,
+                sourceDocument=sourceDoc,
+                comments="",
+                isConfirmed = True).save()
             vat_amount = sourceDoc.get_total_vat()
             if vat_amount > 0:
                 vat = models.Account.objects.get(name='Output VAT')
@@ -258,6 +285,15 @@ def get_invoice(request):
             t1 = models.Transaction(
                 debitAccount=tform.cleaned_data['spentOn'],
                 creditAccount=tform.cleaned_data['vendor'],
+                amount=tform.cleaned_data['amount'],
+                date=tform.cleaned_data['date'],
+                recordedBy=request.user,
+                sourceDocument=sourceDoc,
+                comments=tform.cleaned_data['comments'],
+                isConfirmed = True).save()
+            models.CCTransaction(
+                debitAccount=tform.cleaned_data['spentOn'],
+                creditAccount=tform.cleaned_data['department'].costCentre,
                 amount=tform.cleaned_data['amount'],
                 date=tform.cleaned_data['date'],
                 recordedBy=request.user,

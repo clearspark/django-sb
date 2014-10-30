@@ -28,7 +28,7 @@
         </tr>
         {% for t in account.period_transactions %}
             <tr>
-                {% if t.debitAccount = account %}
+                {% if t.debitAccount.pk = account.pk %}
                     <td>{{t.date_href|safe}}</td>
                     <td>{{t.creditAccount.href|safe}}</td>
                     <td>{{t.sourceDocument.href|safe}}</td>
