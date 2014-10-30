@@ -5,9 +5,12 @@ from django.core.urlresolvers import reverse
 from django.template import Template, Context
 #from mptt.models import MPTTModel, TreeForeignKey
 
-ACCOUNT_CATEGORIES = (("equity", "Equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense"))
+GAAP_ACCOUNT_CATEGORIES = (("equity", "Equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense"),)
+INTERNAL_ACCOUNT_CATEGORIES = (("cost_centre", "Cost centre"),)
+ALL_ACCOUNT_CATEGORIES = GAAP_ACCOUNT_CATEGORIES + INTERNAL_ACCOUNT_CATEGORIES
 INCOME_STATEMENT_CATS = ('income', 'expense',)
 BALANCE_SHEET_CATS = ('equity', 'asset', 'liability',)
+INTERNAL_SHEET_CATS = ('cost_centre',)
 
 def url_to_edit_object(object):
     url = reverse('admin:%s_%s_change' %(object._meta.app_label,  object._meta.module_name),  args=[object.id] )
@@ -16,7 +19,7 @@ def url_to_edit_object(object):
 # Create your models here.
 class Account(models.Model):
     name = models.CharField(max_length=200)
-    cat = models.CharField(max_length=200, choices=ACCOUNT_CATEGORIES)
+    cat = models.CharField(max_length=200, choices=ALL_ACCOUNT_CATEGORIES)
     gl_code = models.CharField(max_length=20, blank=True)
     parent = models.ForeignKey("self", related_name="children", null=True, blank=True)
     class Meta:
@@ -100,6 +103,26 @@ class Account(models.Model):
         else:
             return None
 
+class CostCentre(Account):
+    class Meta:
+        proxy = True
+    def transactions(self):
+        return CCTransaction.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).order_by("date").all()
+    def get_debits(self, begin=None, end=None):
+        debits = self.cc_debits
+        if begin is not None:
+            debits = debits.filter(date__gte = begin)
+        if end is not None:
+            debits = debits.filter(date__lte = end)
+        return debits
+    def get_credits(self, begin=None, end=None):
+        credits = self.cc_credits
+        if begin is not None:
+            credits = credits.filter(date__gte = begin)
+        if end is not None:
+            credits = credits.filter(date__lte = end)
+        return credits
+
 class Client(models.Model):
     account = models.ForeignKey('Account')
     adminGoup = models.ForeignKey('auth.Group')
@@ -178,24 +201,33 @@ class InvoiceLine(models.Model):
     class Meta:
         ordering = ['pk']
 
-class Transaction(models.Model):
-    debitAccount = models.ForeignKey("Account", related_name="debits")
-    creditAccount = models.ForeignKey("Account", related_name="credits")
+class TransactionParent(models.Model):
     amount = models.DecimalField(max_digits=16, decimal_places=2)
     date = models.DateField()
     recordedTime = models.DateTimeField(auto_now=True)
     recordedBy = models.ForeignKey("auth.User", editable=False)
-    sourceDocument = models.ForeignKey(SourceDoc, related_name="transactions", blank=True, null=True)
     comments = models.TextField(blank=True)
     isConfirmed = models.BooleanField()
     class Meta:
-        ordering = ["date", "recordedTime"]
+        ordering = ["date", "pk"]
+        abstract = True
     def __unicode__(self):
         return "{} {}:{} {}".format(self.date, self.debitAccount, self.creditAccount, self.amount)
+
+
+class Transaction(TransactionParent):
+    debitAccount = models.ForeignKey("Account", related_name="debits")
+    creditAccount = models.ForeignKey("Account", related_name="credits")
+    sourceDocument = models.ForeignKey(SourceDoc, related_name="transactions", blank=True, null=True)
     def date_href(self):
         return '<a href="%s">%s</a>' %(self.get_absolute_url(), self.date)
     def get_absolute_url(self):
         return reverse("transaction-details", kwargs={"pk": self.pk})
+
+class CCTransaction(TransactionParent):
+    debitAccount = models.ForeignKey("Account", related_name="cc_debits")
+    creditAccount = models.ForeignKey("Account", related_name="cc_credits")
+    sourceDocument = models.ForeignKey(SourceDoc, related_name="cc_transactions", blank=True, null=True)
 
 def asset_image_file_path(instance, filename):
     return "sb/assets/{}/{}".format(instance.number, filename)
@@ -223,3 +255,13 @@ class Bookie(models.Model):
     canApplyInterest = models.BooleanField(default=False)
     def __unicode__(self):
         return self.user.get_full_name()
+
+class Department(models.Model):
+    longName = models.CharField(max_length=255)
+    shortName = models.CharField(max_length=8)
+    minMonthlyDeduction = models.DecimalField(max_digits=16, decimal_places=2)
+    invoiceDeductionFraction = models.DecimalField(max_digits=4, decimal_places=4)
+    costCentre = models.ForeignKey('CostCentre')
+    def __unicode__(self):
+        return self.shortName
+
