@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from django.db import models
 from django.core.urlresolvers import reverse
 from django.template import Template, Context
+from django.conf import settings
+
 #from mptt.models import MPTTModel, TreeForeignKey
 
 GAAP_ACCOUNT_CATEGORIES = (("equity", "Equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense"),)
@@ -190,7 +192,7 @@ class Invoice(SourceDoc):
         return self.get_total_excl() + self.get_total_vat()
     def make_html(self):
         t = Template(self.client.invoiceTemplate)
-        c = Context({'invoice': self})
+        c = Context({'invoice': self, 'STATIC_URL': settings.STATIC_URL})
         return t.render(c)
 
 class InvoiceLine(models.Model):

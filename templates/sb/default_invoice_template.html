@@ -13,7 +13,6 @@
             }
 			.letterhead {
 				border: 0;
-				height: 0.8in;
 				margin: 0;
 				padding: 0;
 				text-align: right;
@@ -22,9 +21,10 @@
 			.letterhead img {
 				border: 0;
 				float: left;
-				height: 0.8in;
+				height: 1.7in;
 				margin: 0;
 				padding: 0;
+                padding-left: 0.4in;
 			}	
             .wrapper {
 				border: 0;
@@ -38,7 +38,7 @@
 				padding: 0;
 			}
 			.column {
-				margin-top: 3mm;
+				margin-top: 1mm;
 				width: 3.05in;
 				border: 0;
 				padding: 0 1mm 0 1mm;
@@ -48,17 +48,14 @@
 				float: left;
 			}
 			.right {
-				margin-top: 3mm;
 				float: right;
 			}
             h1 {
                 color: #666;
 				float: right;
                 font-size: 24pt;
-				padding: auto 0;
 				margin-right: 3pt;
                 text-align: right;
-				width: 50%;
             }
             table.invoice-table {
 				width: 100%;
@@ -76,6 +73,7 @@
     </head>
     <body>
 		<div class="letterhead">
+            <img src="{{STATIC_URL}}cs_website/images/logo_white.png"/> 
             <h1>TAX INVOICE</h1>
 		</div>
         <div class="wrapper">
