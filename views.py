@@ -9,7 +9,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
-from django.template import Template, Context
 
 from sb import models, forms
 # Create your views here.
@@ -404,50 +403,10 @@ def client_account_statement(request):
         client = form.cleaned_data['client']
         if not client.adminGoup.user_set.filter(pk=request.user.pk).exists():
             raise PermissionDenied
-        account = client.account
         statementDate = form.cleaned_data['statementDate']
         startDate = form.cleaned_data['startDate']
-        starting_balance = account.balance(end=startDate - datetime.timedelta(days=1))
-        rows = []
-        rows.append(['', startDate, 'Balance carried over', '', '', starting_balance])
-        transactions = account.get_transactions(begin=startDate, end=statementDate)
-        balance = starting_balance
-        for t in transactions:
-            if t.debitAccount == account:
-                balance += t.amount
-                rows.append([t.sourceDocument.number, t.date, t.comments, t.amount, '', balance])
-            else:
-                balance -= t.amount
-                rows.append([t.sourceDocument.number, t.date, t.comments, '', t.amount, balance])
-        debits = account.get_debits().order_by('-date')
-        current = Decimal('0.00')
-        days_31_60 = Decimal('0.00')
-        days_61_90 = Decimal('0.00')
-        days_90_plus = Decimal('0.00')
-        for d in debits:
-            days_ago = statementDate - d.date
-            amount = min(balance, d.amount)
-            if  days_ago < datetime.timedelta(days=31):
-                current += amount
-            elif days_ago < datetime.timedelta(days=61):
-                days_31_60 += amount
-            elif days_ago < datetime.timedelta(days=91):
-                days_61_90 += amount
-            else:
-                days_90_plus += amount
-            balance -= d.amount
-            if balance <= Decimal('0.00'):
-                break
-
-
-        t = Template(client.statementTemplate)
-        c = Context({'rows': rows,
-            'current': current,
-            'days_31_60': days_31_60,
-            'days_61_90': days_61_90,
-            'days_90_plus': days_90_plus})
-        response = HttpResponse(t.render(c))
-        return response
+        statement = models.Statement(client, startDate, statementDate)
+        return HttpResponse(statement.make_html())
     else:
         return render(request, 'sb/client_statements_menu.html', {'form': form})
     

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 from django.db import models
 from django.core.urlresolvers import reverse
@@ -267,3 +268,73 @@ class Department(models.Model):
     def __unicode__(self):
         return self.shortName
 
+class StatementTransaction(object):
+    def __init__(self, reference, date, description, debit, credit, balance):
+        self.reference = reference
+        self.date = date
+        self.description = description
+        self.debit = debit
+        self.credit = credit
+        self.balance = balance
+
+class Statement(object):
+    def __init__(self, client, startDate, statementDate):
+        self.client = client
+        self.startDate = startDate
+        self.statementDate = statementDate
+        self.transactions = None
+        self.startingBalance = self.client.account.balance(end=self.startDate - timedelta(days=1))
+        self.endingBalance = self.client.account.balance(end=self.statementDate)
+        self.debtAge = None
+        self.get_transactions()
+        self.calculate_debt_age()
+    def get_transactions(self):
+        account = self.client.account
+        self.transactions = []
+        self.transactions.append(StatementTransaction(reference='', date=self.startDate,
+            description= 'Balance carried over', debit='', credit='', balance=self.startingBalance))
+        transactions = account.get_transactions(begin=self.startDate, end=self.statementDate)
+        balance = self.startingBalance
+        for t in transactions:
+            if t.debitAccount == account:
+                balance += t.amount
+                self.transactions.append(
+                        StatementTransaction(t.sourceDocument.number, t.date,
+                            t.comments, t.amount, '', balance)
+                        )
+            else:
+                balance -= t.amount
+                self.transactions.append(
+                        StatementTransaction(t.sourceDocument.number, t.date,
+                            t.comments, '', t.amount, balance))
+    def calculate_debt_age(self):
+        account = self.client.account
+        debits = account.get_debits(end=self.statementDate).order_by('-date')
+        current = Decimal('0.00')
+        days_31_60 = Decimal('0.00')
+        days_61_90 = Decimal('0.00')
+        days_90_plus = Decimal('0.00')
+        balance = self.endingBalance
+        for d in debits:
+            days_ago = self.statementDate - d.date
+            amount = min(balance, d.amount)
+            if  days_ago < timedelta(days=31):
+                current += amount
+            elif days_ago < timedelta(days=61):
+                days_31_60 += amount
+            elif days_ago < timedelta(days=91):
+                days_61_90 += amount
+            else:
+                days_90_plus += amount
+            balance -= d.amount
+            if balance <= Decimal('0.00'):
+                break
+        self.debtAge = (
+                ('Current', current),
+                ('31 to 60 days', days_31_60),
+                ('61 to 90 days', days_61_90),
+                ('Older than 90 days', days_90_plus))
+    def make_html(self):
+        t = Template(self.client.statementTemplate)
+        c = Context({'statement': self, 'STATIC_URL': settings.STATIC_URL})
+        return t.render(c)

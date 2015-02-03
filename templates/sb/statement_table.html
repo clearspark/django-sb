@@ -1,4 +1,5 @@
-<table>
+{% load humanize %}
+<table class='statement-table'>
     <tr>
         <th>Our reference</th>
         <th>Date</th>
@@ -7,11 +8,14 @@
         <th>Credit</th>
         <th>Balance</th>
     </tr>
-    {% for row in rows %}
+    {% for t in statement.transactions %}
         <tr>
-            {% for c in row %}
-                <td>{{c}}</td>
-            {% endfor %}
+            <td>{{t.reference}}</td>
+            <td>{{t.date}}</td>
+            <td>{{t.description}}</td>
+            <td class="currency">{{t.debit|floatformat:2|intcomma}}</td>
+            <td class="currency">{{t.credit|floatformat:2|intcomma}}</td>
+            <td class="currency">{{t.balance|floatformat:2|intcomma}}</td>
         </tr>
     {% endfor %}
 </table>
