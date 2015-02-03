@@ -11,7 +11,7 @@
     {% for t in statement.transactions %}
         <tr>
             <td>{{t.reference}}</td>
-            <td>{{t.date}}</td>
+            <td>{{t.date.isoformat}}</td>
             <td>{{t.description}}</td>
             <td class="currency">{{t.debit|floatformat:2|intcomma}}</td>
             <td class="currency">{{t.credit|floatformat:2|intcomma}}</td>
