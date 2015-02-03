@@ -2,7 +2,7 @@
 <table class='statement-table'>
     <tr>
         <th>Our reference</th>
-        <th>Date</th>
+        <th class="date">Date</th>
         <th>Description</th>
         <th>Debit</th>
         <th>Credit</th>
@@ -11,7 +11,7 @@
     {% for t in statement.transactions %}
         <tr>
             <td>{{t.reference}}</td>
-            <td>{{t.date.isoformat}}</td>
+            <td class="date">{{t.date.isoformat}}</td>
             <td>{{t.description}}</td>
             <td class="currency">{{t.debit|floatformat:2|intcomma}}</td>
             <td class="currency">{{t.credit|floatformat:2|intcomma}}</td>
