@@ -421,3 +421,12 @@ def view_invoice(request, invoice_nr):
     else:
         return HttpResponse(invoice.html)
 
+@login_required
+def regen_invoice(request, invoice_nr):
+    invoice = get_object_or_404(models.Invoice, number=invoice_nr)
+    client = invoice.client
+    if not client.adminGoup.user_set.filter(pk=request.user.pk).exists():
+        raise PermissionDenied
+    invoice.html = invoice.make_html()
+    invoice.save()
+    return redirect(invoice)

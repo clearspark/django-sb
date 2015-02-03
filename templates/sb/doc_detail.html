@@ -6,6 +6,8 @@
     {% endif %}
     {% if doc.invoice %}
         <p><a href="{% url view-invoice invoice_nr=doc.number %}">View invoice in browser</a></p>
+        <p><a href="/pdf{% url view-invoice invoice_nr=doc.number %}">Download PDF</a></p>
+        <p><a href="{% url regen-invoice invoice_nr=doc.number %}">Regenerate invoice</a></p>
     {% endif %}
     <p>
         <a href="{{doc.edit_url}}">Edit</a>
