@@ -97,8 +97,8 @@ def trial_balance(request):
                 for cat in models.ACCOUNT_CATEGORIES]
     for g in accGroups:
         g['total'] = sum([ a.period_balance for a in g['accounts']])
-    accountDict = {"account_groups": accGroups, 'dateform': dateform}
-    return render(request, "sb/trial_balance.html", accountDict)
+    context = {"account_groups": accGroups, 'dateform': dateform, 'begin':begin, 'end': end}
+    return render(request, "sb/trial_balance.html", context)
 
 @login_required
 def add_payslip(request):
