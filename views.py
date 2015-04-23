@@ -230,39 +230,7 @@ def send_invoice(request):
                 lineItem.save()
             sourceDoc.html = sourceDoc.make_html()
             sourceDoc.save()
-            sales = models.Account.objects.get(name='Sales')
-            amount = sourceDoc.get_total_excl()
-            models.Transaction(
-                debitAccount=form.cleaned_data['client'].account,
-                creditAccount=sales,
-                amount=amount,
-                date=form.cleaned_data['date'],
-                recordedBy=request.user,
-                sourceDocument=sourceDoc,
-                comments="",
-                isConfirmed = True).save()
-            cc_amount = amount - (amount * form.cleaned_data["department"].invoiceDeductionFraction)
-            models.CCTransaction(
-                debitAccount=form.cleaned_data['department'].costCentre,
-                creditAccount=sales,
-                amount=cc_amount,
-                date=form.cleaned_data['date'],
-                recordedBy=request.user,
-                sourceDocument=sourceDoc,
-                comments="",
-                isConfirmed = True).save()
-            vat_amount = sourceDoc.get_total_vat()
-            if vat_amount > 0:
-                vat = models.Account.objects.get(name='Output VAT')
-                models.Transaction(
-                    debitAccount=form.cleaned_data['client'].account,
-                    creditAccount=vat,
-                    amount=vat_amount,
-                    date=form.cleaned_data['date'],
-                    recordedBy=request.user,
-                    sourceDocument=sourceDoc,
-                    comments="",
-                    isConfirmed = True).save()
+            sourceDoc.make_transactions(form.cleaned_data['department'], request.user)
             return redirect(sourceDoc)
     return render(request, "sb/send_invoice.html", 
             {'form': form, 'lineforms': lineForms})

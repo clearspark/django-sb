@@ -195,6 +195,49 @@ class Invoice(SourceDoc):
         t = Template(self.client.invoiceTemplate)
         c = Context({'invoice': self, 'STATIC_URL': settings.STATIC_URL})
         return t.render(c)
+    def make_transactions(self, department, user):
+        sales = Account.objects.get(name='Sales')
+        amount = self.get_total_excl()
+        Transaction(
+                debitAccount=self.client.account,
+                creditAccount=sales,
+                amount=amount,
+                date=self.invoiceDate,
+                recordedBy=user,
+                sourceDocument=self,
+                comments="",
+                isConfirmed = True).save()
+        cc_amount = amount - (amount * department.invoiceDeductionFraction)
+        CCTransaction(
+                debitAccount=department.costCentre,
+                creditAccount=sales,
+                amount=cc_amount,
+                date=self.invoiceDate,
+                recordedBy=user,
+                sourceDocument=self,
+                comments="",
+                isConfirmed = True).save()
+        CSP=Department.objects.get(shortName="CSP")
+        CCTransaction(debitAccount=CSP.costCentre,
+                creditAccount=sales,
+                amount= amount - cc_amount,
+                date=self.invoiceDate,
+                recordedBy=user,
+                sourceDocument=self,
+                comments="",
+                isConfirmed=True).save()
+        vat_amount = self.get_total_vat()
+        if vat_amount > 0:
+            vat = Account.objects.get(name='Output VAT')
+            Transaction(
+                debitAccount=self.client.account,
+                creditAccount=vat,
+                amount=vat_amount,
+                date=self.invoiceDate,
+                recordedBy=user,
+                sourceDocument=self,
+                comments="",
+                isConfirmed = True).save()
 
 class InvoiceLine(models.Model):
     invoice = models.ForeignKey('Invoice')
@@ -214,6 +257,10 @@ class TransactionParent(models.Model):
     class Meta:
         ordering = ["date", "pk"]
         abstract = True
+    def date_href(self):
+        return '<a href="%s">%s</a>' %(self.get_absolute_url(), self.date)
+    def get_absolute_url(self):
+        return reverse("transaction-details", kwargs={"pk": self.pk})
     def __unicode__(self):
         return "{} {}:{} {}".format(self.date, self.debitAccount, self.creditAccount, self.amount)
 
@@ -222,10 +269,6 @@ class Transaction(TransactionParent):
     debitAccount = models.ForeignKey("Account", related_name="debits")
     creditAccount = models.ForeignKey("Account", related_name="credits")
     sourceDocument = models.ForeignKey(SourceDoc, related_name="transactions", blank=True, null=True)
-    def date_href(self):
-        return '<a href="%s">%s</a>' %(self.get_absolute_url(), self.date)
-    def get_absolute_url(self):
-        return reverse("transaction-details", kwargs={"pk": self.pk})
 
 class CCTransaction(TransactionParent):
     debitAccount = models.ForeignKey("Account", related_name="cc_debits")
