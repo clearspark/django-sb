@@ -7,6 +7,11 @@ class TransactionInline(admin.StackedInline):
     form = modelform_factory(models.Transaction)
     extra = 2
 
+class CCTransactionInline(admin.StackedInline):
+    model = models.CCTransaction
+    form = modelform_factory(models.CCTransaction)
+    extra = 2
+
 class InvoiceLineInline(admin.StackedInline):
     model = models.InvoiceLine
     extra = 2
@@ -25,7 +30,7 @@ class SourceDocAdmin(admin.ModelAdmin):
     list_display = ["number", "transaction_count", "has_file", 'docType']
     list_editable = ['docType']
     list_filter = ['docType', 'transactions__debitAccount', 'transactions__creditAccount']
-    inlines = [TransactionInline]
+    inlines = [TransactionInline, CCTransactionInline]
     save_on_top = True
     def save_model(self, request, obj, form, change):
         #set_generic(request, obj, form, change)
