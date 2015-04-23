@@ -1,8 +1,10 @@
 from django.contrib import admin
+from autocomplete_light import modelform_factory
 from sb import models
 
 class TransactionInline(admin.StackedInline):
     model = models.Transaction
+    form = modelform_factory(models.Transaction)
     extra = 2
 
 class InvoiceLineInline(admin.StackedInline):
@@ -10,6 +12,7 @@ class InvoiceLineInline(admin.StackedInline):
     extra = 2
 
 class TransactionAdmin(admin.ModelAdmin):
+    form = modelform_factory(models.Transaction)
     list_display = ["date", "isConfirmed", "debitAccount", "creditAccount", "amount", "sourceDocument", "comments"]
     list_filter = ["date",  "debitAccount", "creditAccount"]
     save_on_top = True
@@ -36,19 +39,28 @@ class SourceDocAdmin(admin.ModelAdmin):
         formset.save_m2m()
 
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ["long_name", "name", "cat", "balance", "dt_count", "ct_count"]
+    list_display = ["long_name", "name", "cat", "balance", "dt_count", "ct_count", 'gl_code']
     list_filter = ["parent", "cat"]
+
+class CCAdmin(AccountAdmin):
+    list_filter = ["parent"]
+    def queryset(self, request):
+        qs = super(CCAdmin, self).queryset(request)
+        return qs.filter(cat__in=models.INTERNAL_SHEET_CATS)
 
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = ['number', 'client']
     list_filter = ['client']
-    inlines = [InvoiceLineInline]
+    inlines = [InvoiceLineInline, TransactionInline]
 
 admin.site.register(models.Account, AccountAdmin)
+admin.site.register(models.CostCentre, CCAdmin)
 admin.site.register(models.Transaction, TransactionAdmin)
+admin.site.register(models.CCTransaction, TransactionAdmin)
 admin.site.register(models.SourceDoc, SourceDocAdmin)
 admin.site.register(models.Asset)
 admin.site.register(models.Bookie)
 admin.site.register(models.Client)
 admin.site.register(models.Invoice, InvoiceAdmin)
 admin.site.register(models.InvoiceLine)
+admin.site.register(models.Department)

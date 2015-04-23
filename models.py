@@ -1,17 +1,28 @@
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 from django.db import models
 from django.core.urlresolvers import reverse
 from django.template import Template, Context
+from django.conf import settings
+
 #from mptt.models import MPTTModel, TreeForeignKey
 
-ACCOUNT_CATEGORIES = (("equity", "Equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense"))
+GAAP_ACCOUNT_CATEGORIES = (("equity", "Equity"), ("asset", "Asset"), ("liability", "Liability"), ("income", "Income"), ("expense", "Expense"),)
+INTERNAL_ACCOUNT_CATEGORIES = (("cost_centre", "Cost centre"),)
+ALL_ACCOUNT_CATEGORIES = GAAP_ACCOUNT_CATEGORIES + INTERNAL_ACCOUNT_CATEGORIES
 INCOME_STATEMENT_CATS = ('income', 'expense',)
 BALANCE_SHEET_CATS = ('equity', 'asset', 'liability',)
+INTERNAL_SHEET_CATS = ('cost_centre',)
+
+def url_to_edit_object(object):
+    url = reverse('admin:%s_%s_change' %(object._meta.app_label,  object._meta.module_name),  args=[object.id] )
+    return url
+
 # Create your models here.
 class Account(models.Model):
     name = models.CharField(max_length=200)
-    cat = models.CharField(max_length=200, choices=ACCOUNT_CATEGORIES)
+    cat = models.CharField(max_length=200, choices=ALL_ACCOUNT_CATEGORIES)
     gl_code = models.CharField(max_length=20, blank=True)
     parent = models.ForeignKey("self", related_name="children", null=True, blank=True)
     class Meta:
@@ -95,15 +106,41 @@ class Account(models.Model):
         else:
             return None
 
+class CostCentre(Account):
+    class Meta:
+        proxy = True
+    def transactions(self):
+        return CCTransaction.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).order_by("date").all()
+    def get_debits(self, begin=None, end=None):
+        debits = self.cc_debits
+        if begin is not None:
+            debits = debits.filter(date__gte = begin)
+        if end is not None:
+            debits = debits.filter(date__lte = end)
+        return debits
+    def get_credits(self, begin=None, end=None):
+        credits = self.cc_credits
+        if begin is not None:
+            credits = credits.filter(date__gte = begin)
+        if end is not None:
+            credits = credits.filter(date__lte = end)
+        return credits
+
 class Client(models.Model):
     account = models.ForeignKey('Account')
     adminGoup = models.ForeignKey('auth.Group')
     displayName = models.CharField(max_length=100)
-    invoiceTemplate = models.TextField(blank=True)
+    invoiceTemplate = models.TextField(blank=True, default='{% include "sb/default_invoice_template.html" %}')
     statementTemplate = models.TextField(blank=True)
-    invoice_suffix = models.CharField(max_length=12)
+    invoiceSuffix = models.CharField(max_length=12)
+    invoiceOffset = models.IntegerField(default=0, help_text='''The invoice number will be increaced by this number.
+    The reason this is needed is that not all invoices in the database are explicitly represented as such and this ''' )
+    address = models.TextField(help_text="This will be used for generating invoices and statements. HTML tags can be used. Should include Company name, registration, VAT nr etc.")
     def __unicode__(self):
         return self.displayName
+    def get_new_invoice_nr(self):
+        num = self.invoice_set.count() + self.invoiceOffset + 1
+        return "CS%04d-%s" %(num, self.invoiceSuffix)
 
 def source_doc_file_path(instance, filename):
     return "sb/src_docs/{}/{}".format(instance.number, filename)
@@ -112,7 +149,7 @@ class SourceDoc(models.Model):
     electronicCopy = models.FileField(upload_to=source_doc_file_path, blank=True, null=True, verbose_name="Electronic copy")
     recordedTime = models.DateTimeField(auto_now=True)
     recordedBy = models.ForeignKey("auth.User", editable=False)
-    comments = models.TextField(blank=True)
+    comments = models.TextField(blank=True, help_text="Any comments/extra info/meta data about this doc.")
     docType = models.CharField(max_length=20, choices=(
         ('bank-statement', 'Bank statement'),
         ('invoice-out', 'Outbound invoice'),
@@ -133,15 +170,19 @@ class SourceDoc(models.Model):
             return True
         else:
             return False
-
-def get_new_invoice_nr(client):
-    num = Invoice.objects.filter(client=client).count() + 71
-    return "CS%04d-%s" %(num, client.invoice_suffix)
+    def edit_url(self):
+        if hasattr(self, 'invoice'):
+            return url_to_edit_object(self.invoice)
+        else:
+            return url_to_edit_object(self)
 
 class Invoice(SourceDoc):
     client = models.ForeignKey('Client')
     html = models.TextField(blank=True)
+    invoiceDate = models.DateField()
     finalized = models.BooleanField(default=False)
+    clientSummary = models.CharField(max_length=200,
+            help_text='One or two sentence description of what invoice is for.  Will shown on invoice above line items. Possibly on statements.')
     def __unicode__(self):
         return self.number
     def get_total_excl(self):
@@ -152,7 +193,7 @@ class Invoice(SourceDoc):
         return self.get_total_excl() + self.get_total_vat()
     def make_html(self):
         t = Template(self.client.invoiceTemplate)
-        c = Context({'invoice': self})
+        c = Context({'invoice': self, 'STATIC_URL': settings.STATIC_URL})
         return t.render(c)
 
 class InvoiceLine(models.Model):
@@ -163,24 +204,33 @@ class InvoiceLine(models.Model):
     class Meta:
         ordering = ['pk']
 
-class Transaction(models.Model):
-    debitAccount = models.ForeignKey("Account", related_name="debits")
-    creditAccount = models.ForeignKey("Account", related_name="credits")
+class TransactionParent(models.Model):
     amount = models.DecimalField(max_digits=16, decimal_places=2)
     date = models.DateField()
     recordedTime = models.DateTimeField(auto_now=True)
     recordedBy = models.ForeignKey("auth.User", editable=False)
-    sourceDocument = models.ForeignKey(SourceDoc, related_name="transactions", blank=True, null=True)
     comments = models.TextField(blank=True)
     isConfirmed = models.BooleanField()
     class Meta:
-        ordering = ["date", "recordedTime"]
+        ordering = ["date", "pk"]
+        abstract = True
     def __unicode__(self):
         return "{} {}:{} {}".format(self.date, self.debitAccount, self.creditAccount, self.amount)
+
+
+class Transaction(TransactionParent):
+    debitAccount = models.ForeignKey("Account", related_name="debits")
+    creditAccount = models.ForeignKey("Account", related_name="credits")
+    sourceDocument = models.ForeignKey(SourceDoc, related_name="transactions", blank=True, null=True)
     def date_href(self):
         return '<a href="%s">%s</a>' %(self.get_absolute_url(), self.date)
     def get_absolute_url(self):
         return reverse("transaction-details", kwargs={"pk": self.pk})
+
+class CCTransaction(TransactionParent):
+    debitAccount = models.ForeignKey("Account", related_name="cc_debits")
+    creditAccount = models.ForeignKey("Account", related_name="cc_credits")
+    sourceDocument = models.ForeignKey(SourceDoc, related_name="cc_transactions", blank=True, null=True)
 
 def asset_image_file_path(instance, filename):
     return "sb/assets/{}/{}".format(instance.number, filename)
@@ -208,3 +258,83 @@ class Bookie(models.Model):
     canApplyInterest = models.BooleanField(default=False)
     def __unicode__(self):
         return self.user.get_full_name()
+
+class Department(models.Model):
+    longName = models.CharField(max_length=255)
+    shortName = models.CharField(max_length=8)
+    minMonthlyDeduction = models.DecimalField(max_digits=16, decimal_places=2)
+    invoiceDeductionFraction = models.DecimalField(max_digits=4, decimal_places=4)
+    costCentre = models.ForeignKey('CostCentre')
+    def __unicode__(self):
+        return self.shortName
+
+class StatementTransaction(object):
+    def __init__(self, reference, date, description, debit, credit, balance):
+        self.reference = reference
+        self.date = date
+        self.description = description
+        self.debit = debit
+        self.credit = credit
+        self.balance = balance
+
+class Statement(object):
+    def __init__(self, client, startDate, statementDate):
+        self.client = client
+        self.startDate = startDate
+        self.statementDate = statementDate
+        self.transactions = None
+        self.startingBalance = self.client.account.balance(end=self.startDate - timedelta(days=1))
+        self.endingBalance = self.client.account.balance(end=self.statementDate)
+        self.debtAge = None
+        self.get_transactions()
+        self.calculate_debt_age()
+    def get_transactions(self):
+        account = self.client.account
+        self.transactions = []
+        self.transactions.append(StatementTransaction(reference='', date=self.startDate,
+            description= 'Balance carried over', debit='', credit='', balance=self.startingBalance))
+        transactions = account.get_transactions(begin=self.startDate, end=self.statementDate)
+        balance = self.startingBalance
+        for t in transactions:
+            if t.debitAccount == account:
+                balance += t.amount
+                self.transactions.append(
+                        StatementTransaction(t.sourceDocument.number, t.date,
+                            t.comments, t.amount, '', balance)
+                        )
+            else:
+                balance -= t.amount
+                self.transactions.append(
+                        StatementTransaction(t.sourceDocument.number, t.date,
+                            t.comments, '', t.amount, balance))
+    def calculate_debt_age(self):
+        account = self.client.account
+        debits = account.get_debits(end=self.statementDate).order_by('-date')
+        current = Decimal('0.00')
+        days_31_60 = Decimal('0.00')
+        days_61_90 = Decimal('0.00')
+        days_90_plus = Decimal('0.00')
+        balance = self.endingBalance
+        for d in debits:
+            days_ago = self.statementDate - d.date
+            amount = min(balance, d.amount)
+            if  days_ago < timedelta(days=31):
+                current += amount
+            elif days_ago < timedelta(days=61):
+                days_31_60 += amount
+            elif days_ago < timedelta(days=91):
+                days_61_90 += amount
+            else:
+                days_90_plus += amount
+            balance -= d.amount
+            if balance <= Decimal('0.00'):
+                break
+        self.debtAge = (
+                ('Current', current),
+                ('31 to 60 days', days_31_60),
+                ('61 to 90 days', days_61_90),
+                ('Older than 90 days', days_90_plus))
+    def make_html(self):
+        t = Template(self.client.statementTemplate)
+        c = Context({'statement': self, 'STATIC_URL': settings.STATIC_URL})
+        return t.render(c)

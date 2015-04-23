@@ -1,6 +1,7 @@
+from decimal import Decimal
 from django import forms
 from django.forms.models import modelformset_factory
-from django.forms.formsets import formset_factory
+from django.forms.formsets import formset_factory, BaseFormSet
 from sb import models
 
 class PaySlipForm(forms.Form):
@@ -10,6 +11,7 @@ class PaySlipForm(forms.Form):
     paye = forms.DecimalField(decimal_places=2, required=False)
     uif = forms.DecimalField(decimal_places=2, required=False)
     bonus = forms.DecimalField(decimal_places=2, required=False)
+    department = forms.ModelChoiceField(models.Department.objects.all())
 
 class ReimbursementForm(forms.Form):
     amount = forms.DecimalField(decimal_places=2, required=False)
@@ -44,8 +46,14 @@ class DateRangeFilter(forms.Form):
 
 class SendInvoiceForm(forms.Form):
     client = forms.ModelChoiceField(models.Client.objects.all())
-    date = forms.DateField()
-    comments = forms.CharField(required=False, widget=forms.Textarea())
+    date = forms.DateField(required=True)
+    comments = forms.CharField(required=False, widget=forms.Textarea(attrs={'cols': 90}),
+            help_text="Goes in accounting app, client does not see this.")
+    clientSummary = forms.CharField(max_length=200, required=True,
+            widget = forms.Textarea(attrs={'cols': 90, 'rows': 2, 'maxlength': 200}),
+            help_text="Summary for Client. HTML styling tags can be used.")
+    department = forms.ModelChoiceField(models.Department.objects.all())
+        
 
 class InvoiceLineForm(forms.ModelForm):
     class Meta:
@@ -66,6 +74,7 @@ class GetInvoiceForm(forms.Form):
         help_text='Please specify whether VAT is to be added automatically, manually specified or left out.', required=True)
     VATAmount = forms.DecimalField(label="VAT amount", max_digits=16, decimal_places=2, required=False)
     comments = forms.CharField(required=False, widget=forms.Textarea())
+    department = forms.ModelChoiceField(models.Department.objects.all())
 
 class AccountFilter(forms.Form):
     debitAccount = forms.ModelMultipleChoiceField(queryset = models.Account.objects.all(), required=False)
@@ -75,3 +84,17 @@ class ClientStatementForm(forms.Form):
     client = forms.ModelChoiceField(models.Client.objects.all(), label="Client")
     statementDate = forms.DateField(required=True)
     startDate = forms.DateField(help_text="Date from which to show transactions", required=True)
+
+class CCContributionForm(forms.Form):
+    costCentre = forms.ModelChoiceField(queryset=models.CostCentre.objects.filter(cat__in=models.INTERNAL_SHEET_CATS))
+    fraction = forms.DecimalField(max_digits=3, decimal_places=2)
+    amount = forms.DecimalField(max_digits=16, decimal_places=2)
+
+class CCContributionFormSet(BaseFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+        total = sum([f.cleaned_data['fraction'] for f in self.forms])
+        if total > Decimal('1.0000'):
+            raise forms.ValidationError("Fractions cannot exceed a total of 1")
+CCDistributionForm = formset_factory(form=CCContributionForm, formset=CCContributionFormSet)

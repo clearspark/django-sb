@@ -1,0 +1,163 @@
+{% load humanize %}
+<html>
+    <head>
+        <style type="text/css">
+            body {
+				border: 0;
+				font-size: 10pt;
+				margin: 0;
+				padding: 0;
+				width: 6.3in;
+                color: #444;
+                font-family: Tahoma, Arial, Sans-Serif;
+                font-weight: normal;
+            }
+			.letterhead {
+				border: 0;
+				margin: 0;
+				padding: 0;
+				text-align: right;
+				width: 100%;
+			}
+			.letterhead img {
+				border: 0;
+				float: left;
+				height: 1.7in;
+				margin: 0;
+				padding: 0;
+			}	
+            .wrapper {
+				border: 0;
+				margin: 0;
+                padding: 0;
+                position: relative;
+            }
+			.wrapper p {
+				border: 0;
+				margin: 2pt 0 4pt 0;
+				padding: 0;
+			}
+			.column {
+				margin-top: 1mm;
+				width: 3.05in;
+				border: 0;
+				padding: 0 1mm 0 1mm;
+			}
+			.left {
+				clear: left;
+				float: left;
+			}
+			.right {
+				float: right;
+			}
+            .section {
+                margin: 3mm 0 3mm 0;
+            }
+            h1 {
+                color: #666;
+				float: right;
+                font-size: 24pt;
+				margin-right: 3pt;
+                text-align: right;
+            }
+            table.statement-table {
+				width: 100%;
+				clear: both;
+                border-collapse: collapse;
+            }
+            table.statement-table td, th {
+                border: 1px solid #AAA;
+                padding: 3px;
+            }
+            td {
+                vertical-align: top;
+                font-size: 10pt;
+            }
+            th {
+                font-size: 10pt;
+            }
+            td.currency {
+                text-align: right;
+            }
+            td.date {
+                min-width: 5em;
+            }
+        </style>
+    </head>
+    <body>
+		<div class="letterhead">
+            <img src="{{STATIC_URL}}cs_website/images/logo_white_smaller.png"/> 
+            <h1>Account<br/>Statement</h1>
+		</div>
+        <div class="wrapper">
+            <div class="section">
+				<div class="column left">
+					<p><strong>ClearSpark (PTY) Ltd</strong></p>
+
+					<p>Reg# 2012/035520/07</p>
+
+					<p>VAT# 4390264523</p>
+
+					<p>89 Roodebloem Road<br />
+						Woodstock<br />
+						Cape Town<br />
+						7925</p>
+
+					<p>Phone# 074 274 8271</p>
+				</div>
+				<div class="column right">
+					<p>To:</p>
+					<p>{{statement.client.address|safe}}</p>
+				</div>
+			</div>
+			<div style="clear:both;">
+            </div>
+            <div class="section">
+                <p>
+                    <strong>Statement date:</strong> {{statement.statementDate}}
+                </p>
+            </div>
+            <div class="section">
+                <p>
+                    <strong>Transactions:</strong>
+                </p>
+
+                {% include "sb/statement_table.html" %}
+            </div>
+            <div class="section">
+                <strong>Debt age:</strong>
+                <div>
+                    <table class='statement-table'>
+                        <tr>
+                            {% for age in statement.debtAge %}
+                                <th>{{age.0}}</th>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            {% for age in statement.debtAge %}
+                                <td class="currency">{{age.1|floatformat:2|intcomma}}</td>
+                            {% endfor %}
+                        </tr>
+                    </table>
+                </div>
+			</div>
+            <div style="clear:both;">
+                <p><strong>Terms and conditions:</strong></p>
+
+                <p>Invoices are payable in full within 30 days of statement date.</p>
+				<p>Amounts over 30 days in arrears will attract interest at a rate of 12% p/a, compounded monthly, ie. 1% every month.</p>
+				<p>Payments will be offset against the oldest unpaid invoice first.</p>
+
+                <p><strong>Payment details:</strong></p>
+
+                <p>
+					ClearSpark (Pty) Ltd<br />
+					FNB Business Cheque Account<br />
+					Acc #: 623 5021 7446<br />
+					Branch: Tygerberg<br />
+					Branch Code: 201410
+				</p>
+            </div>
+        </div>
+    </body>
+</html>
