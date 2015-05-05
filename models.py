@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.db import models
@@ -308,9 +308,30 @@ class Department(models.Model):
     minMonthlyDeduction = models.DecimalField(max_digits=16, decimal_places=2)
     invoiceDeductionFraction = models.DecimalField(max_digits=4, decimal_places=4)
     costCentre = models.ForeignKey('CostCentre')
+    description = models.TextField()
     def __unicode__(self):
         return self.shortName
 
+class Employee(models.Model):
+    user = models.ForeignKey('auth.User')
+    account = models.ForeignKey(Account)
+    isActive = models.BooleanField(help_text='Is employee currently working?')
+    def __unicode__(self):
+        return repr(self.user)
+    def current_appointments(self, date=None):
+        if date is None:
+            date = datetime.date.now()
+        return self.appointment_set.objects.filter(startDate__lte=date, endDate__gte=date).all()
+
+class Appointment(models.Model):
+    employee = models.ForeignKey(Employee)
+    title = models.CharField(max_length=250)
+    department = models.ForeignKey(Department)
+    startDate = models.DateField()
+    endDate = models.DateField()
+    timeFraction = models.DecimalField(max_digits=4, decimal_places=4)
+
+#NON-DJANGO models
 class StatementTransaction(object):
     def __init__(self, reference, date, description, debit, credit, balance):
         self.reference = reference
@@ -381,3 +402,6 @@ class Statement(object):
         t = Template(self.client.statementTemplate)
         c = Context({'statement': self, 'STATIC_URL': settings.STATIC_URL})
         return t.render(c)
+
+class PaySlip(object):
+    pass
