@@ -5,7 +5,7 @@ from django.forms.formsets import formset_factory, BaseFormSet
 from sb import models
 
 class PaySlipForm(forms.Form):
-    employee = forms.ModelChoiceField(models.Account.objects.filter(parent__name="Creditors"))
+    employee = forms.ModelChoiceField(models.Employee.objects.all())
     date = forms.DateField()
     gross = forms.DecimalField(decimal_places=2)
     paye = forms.DecimalField(decimal_places=2, required=False)
@@ -97,4 +97,5 @@ class CCContributionFormSet(BaseFormSet):
         total = sum([f.cleaned_data['fraction'] for f in self.forms])
         if total > Decimal('1.0000'):
             raise forms.ValidationError("Fractions cannot exceed a total of 1")
+        
 CCDistributionForm = formset_factory(form=CCContributionForm, formset=CCContributionFormSet)

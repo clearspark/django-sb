@@ -4,12 +4,12 @@ from sb import models
 
 class TransactionInline(admin.StackedInline):
     model = models.Transaction
-    form = modelform_factory(models.Transaction)
+    form = modelform_factory(models.Transaction, fields='__all__')
     extra = 2
 
 class CCTransactionInline(admin.StackedInline):
     model = models.CCTransaction
-    form = modelform_factory(models.CCTransaction)
+    form = modelform_factory(models.CCTransaction, fields='__all__')
     extra = 2
 
 class InvoiceLineInline(admin.StackedInline):
@@ -17,7 +17,7 @@ class InvoiceLineInline(admin.StackedInline):
     extra = 2
 
 class TransactionAdmin(admin.ModelAdmin):
-    form = modelform_factory(models.Transaction)
+    form = modelform_factory(models.Transaction, fields='__all__')
     list_display = ["date", "isConfirmed", "debitAccount", "creditAccount", "amount", "sourceDocument", "comments"]
     list_filter = ["date",  "debitAccount", "creditAccount"]
     save_on_top = True
@@ -58,6 +58,14 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_filter = ['client']
     inlines = [InvoiceLineInline, TransactionInline]
 
+class AppointmentInline(admin.TabularInline):
+    model = models.Appointment
+    extra = 1
+
+class EmployeeAdmin(admin.ModelAdmin):
+    inlines = [AppointmentInline]
+    list_filter = ['appointment__department']
+
 admin.site.register(models.Account, AccountAdmin)
 admin.site.register(models.CostCentre, CCAdmin)
 admin.site.register(models.Transaction, TransactionAdmin)
@@ -66,6 +74,7 @@ admin.site.register(models.SourceDoc, SourceDocAdmin)
 admin.site.register(models.Asset)
 admin.site.register(models.Bookie)
 admin.site.register(models.Client)
+admin.site.register(models.Employee, EmployeeAdmin)
 admin.site.register(models.Invoice, InvoiceAdmin)
 admin.site.register(models.InvoiceLine)
 admin.site.register(models.Department)

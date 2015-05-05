@@ -105,12 +105,19 @@ def trial_balance(request):
     return render(request, "sb/trial_balance.html", context)
 
 @login_required
-def add_payslip(request):
+def add_payslip_0(request):
     check_perm(request, 'canAddPayslip')
+    employees = models.Employee.objects.filter(isActive=True)
+
+@login_required
+def add_payslip_1(request, employee_pk):
+    check_perm(request, 'canAddPayslip')
+    employee = models.Employee.objects.get(pk=pk)
     if request.method == "GET":
         pform = forms.PaySlipForm()
         dform = forms.SourceDocForm()
         rforms = forms.ReimbursementFormSet()
+        cccforms = forms.CCContributionFormSet()
     elif request.method == "POST":
         pform = forms.PaySlipForm(request.POST)
         dform = forms.SourceDocForm(request.POST, request.FILES)
