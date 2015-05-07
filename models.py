@@ -16,7 +16,7 @@ BALANCE_SHEET_CATS = ('equity', 'asset', 'liability',)
 INTERNAL_SHEET_CATS = ('cost_centre',)
 
 def url_to_edit_object(object):
-    url = reverse('admin:%s_%s_change' %(object._meta.app_label,  object._meta.module_name),  args=[object.id] )
+    url = reverse('admin:%s_%s_change' %(object._meta.app_label,  object._meta.model_name),  args=[object.id] )
     return url
 
 # Create your models here.
