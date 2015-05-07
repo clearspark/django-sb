@@ -1,7 +1,7 @@
 {% extends "sb/base.html" %}
 
 {% block sbContent %}
-    <h1>Adding new payslip</h2>
+    <h1>Adding new payslip for {{employee}}</h2>
     <form action="" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <table class='form-table'>

@@ -108,106 +108,55 @@ def trial_balance(request):
 def add_payslip_0(request):
     check_perm(request, 'canAddPayslip')
     employees = models.Employee.objects.filter(isActive=True)
+    return render(request, "sb/add_payslip_0.html", {'employees': employees})
 
 @login_required
 def add_payslip_1(request, employee_pk):
     check_perm(request, 'canAddPayslip')
-    employee = models.Employee.objects.get(pk=pk)
+    employee = get_object_or_404(models.Employee, pk=employee_pk)
     if request.method == "GET":
-        pform = forms.PaySlipForm()
-        dform = forms.SourceDocForm()
-        rforms = forms.ReimbursementFormSet()
-        cccforms = forms.CCContributionFormSet()
+        past_payslips = models.Payslip.objects\
+                .filter(
+                    employee=employee)\
+                .order_by(
+                    '-transactions__date')
+        if past_payslips.exists():
+            last_payslip = past_payslips[0]
+            prev_date = last_payslip.date
+            y, m = divmod(12 * prev_date.year + prev_date.month + 2, 12)
+            suggested_date = datetime.date(year=y, month=m, day=1) - datetime.timedelta(days=1)
+        else:
+            nm = datetime.date.today() + datetime.timedelta(days=14)
+            suggested_date = datetime.date(year=nm.year, month=nm.month, day=1) - datetime.timedelta(days=1)
+        doc_number = 'ps_{initials}_{year}_{month}'.format(
+                initials=employee.initials,
+                year=suggested_date.year,
+                month=suggested_date.month)
+        pform = forms.PaySlipForm(
+                initial={'number': doc_number,
+                         'date': suggested_date})
+        #cccforms = forms.CCContributionFormSet()
     elif request.method == "POST":
         pform = forms.PaySlipForm(request.POST)
-        dform = forms.SourceDocForm(request.POST, request.FILES)
-        rforms = forms.ReimbursementFormSet(request.POST)
-        if pform.is_valid() and dform.is_valid() and rforms.is_valid():
-            #Read data
-            sourceDoc = dform.save(commit=False)
-            sourceDoc.recordedBy=request.user
-            sourceDoc.docType = 'payslip'
-            sourceDoc.save()
-            pdata = pform.cleaned_data
-            employee = pdata["employee"]
-            date = pdata["date"]
-            grossAmount = pdata["gross"]
-            payeAmount = pdata["paye"]
-            uifAmount = pdata.get("uif", None)
-            bonusAmount = pdata.get("bonus", None)
-            costCentre = pdata["department"].costCentre
-            salaries = models.Account.objects.get(name="Salaries")
-            paye = models.Account.objects.get(name="PAYE")
-            uif = models.Account.objects.get(name="UIF")
-            sdl = models.Account.objects.get(name="SDL")
-            sars = models.Account.objects.get(name="SARS - PAYE")
-            bonusses = models.Account.objects.get(name="Bonusses")
-            #Initiate tracking variable
-            costToCompany = grossAmount
-            #generate transactions
-            if payeAmount:
-                #Increace employee account with paye ammount
-                models.Transaction(debitAccount=paye, creditAccount=employee,
-                        amount=payeAmount, date=date, recordedBy=request.user,
-                        sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
-                #Move paye amount to SARS
-                models.Transaction(debitAccount=employee, creditAccount=sars,
-                        amount=payeAmount, date=date, recordedBy=request.user,
-                        sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
-            else:
-                payeAmount = Decimal('0.00')
-            if uifAmount:
-                #Increace employee account with paye ammount
-                models.Transaction(debitAccount=uif, creditAccount=employee,
-                        amount=uifAmount, date=date, recordedBy=request.user,
-                        sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
-                #Move paye amount to SARS
-                models.Transaction(debitAccount=employee, creditAccount=sars,
-                        amount=uifAmount, date=date, recordedBy=request.user,
-                        sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
-                #Add company contribution
-                models.Transaction(debitAccount=uif, creditAccount=sars,
-                        amount=uifAmount, date=date, recordedBy=request.user,
-                        sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
-                costToCompany += uifAmount
-            else:
-                uifAmount = Decimal('0.00')
-            #Increace employee account with nett salary
-            nett = grossAmount - payeAmount - uifAmount
-            models.Transaction(debitAccount=salaries, creditAccount=employee,
-                    amount=nett, date=date, recordedBy=request.user,
-                    sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
-            #Add SDL transation
-            sdlAmount = grossAmount / Decimal('100.00')
-            models.Transaction(debitAccount=sdl, creditAccount=sars,
-                    amount=sdlAmount, date=date, recordedBy=request.user,
-                    sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
-            costToCompany += sdlAmount
-            #Increace employee account with bonus amount
-            if bonusAmount:
-                models.Transaction(debitAccount=bonusses, creditAccount=employee,
-                        amount=bonusAmount, date=date, recordedBy=request.user,
-                        sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
-                costToCompany += bonusAmount
-            #Create cost centre transaction
-            models.CCTransaction(debitAccount=salaries, creditAccount=costCentre,
-                    amount=costToCompany, date=date, recordedBy=request.user,
-                    sourceDocument=sourceDoc, comments="", isConfirmed=True).save()
-            for rform in rforms:
-                account = rform.cleaned_data.get('account', None)
-                if account is not None:
-                    models.Transaction(debitAccount=account,
-                            creditAccount=employee, amount=rform.cleaned_data['amount'],
-                            date=date, recordedBy=request.user, sourceDocument=sourceDoc,
-                            comments="", isConfirmed = True).save()
-                    models.CCTransaction(debitAccount=account,
-                            creditAccount=costCentre, amount=rform.cleaned_data['amount'],
-                            date=date, recordedBy=request.user, sourceDocument=sourceDoc,
-                            comments="", isConfirmed = True).save()
-
-            return redirect(sourceDoc)
-    return render(request, "sb/payslip_form.html", 
-            {'pform': pform, 'dform': dform, 'rforms': rforms})
+        if pform.is_valid():
+            payslip = pform.save(commit=False)
+            payslip.recordedBy = request.user
+            payslip.docType = 'payslip'
+            payslip.employee = employee
+            payslip.save()
+            try:
+                payslip.make_transactions(request.user)
+                success = True
+            except Exception as e:
+                payslip.delete()
+                messages.error(request, "Unable to create transactions")
+                success = False
+                if settings.DEBUG:
+                    raise e
+            if success:
+                return redirect(payslip)
+    return render(request, "sb/add_payslip_1.html", 
+            {'employee': employee, 'pform': pform})#, 'rforms': rforms})
 
 import decimal
 @login_required
@@ -363,7 +312,8 @@ def apply_interest(request):
                         date=data['date'],
                         amount=interest_amount,
                         recordedBy=request.user,
-                        sourceDocument=sourceDoc)
+                        sourceDocument=sourceDoc,
+                        isConfirmed=True)
                 t.save()
             return redirect(sourceDoc)
 

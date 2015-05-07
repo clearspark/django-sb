@@ -2,16 +2,13 @@ from decimal import Decimal
 from django import forms
 from django.forms.models import modelformset_factory
 from django.forms.formsets import formset_factory, BaseFormSet
+from autocomplete_light import modelform_factory
 from sb import models
 
-class PaySlipForm(forms.Form):
-    employee = forms.ModelChoiceField(models.Employee.objects.all())
-    date = forms.DateField()
-    gross = forms.DecimalField(decimal_places=2)
-    paye = forms.DecimalField(decimal_places=2, required=False)
-    uif = forms.DecimalField(decimal_places=2, required=False)
-    bonus = forms.DecimalField(decimal_places=2, required=False)
-    department = forms.ModelChoiceField(models.Department.objects.all())
+PaySlipForm = modelform_factory(
+        models.Payslip,
+        exclude=['docType', 'employee'],
+        )
 
 class ReimbursementForm(forms.Form):
     amount = forms.DecimalField(decimal_places=2, required=False)

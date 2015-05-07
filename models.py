@@ -173,8 +173,81 @@ class SourceDoc(models.Model):
     def edit_url(self):
         if hasattr(self, 'invoice'):
             return url_to_edit_object(self.invoice)
+        if hasattr(self, 'payslip'):
+            return url_to_edit_object(self.payslip)
         else:
             return url_to_edit_object(self)
+
+#class ReimburseMent(models.Model):
+#    payslip = models.ForeignKey('Payslip')
+#    expense = models.ForeignKey('Account')
+#    amount = models.Decimal(max_digits=16, decimal_places=2)
+
+class Payslip(SourceDoc):
+    employee = models.ForeignKey('Employee')
+    date = models.DateField()
+    gross = models.DecimalField(max_digits=16, decimal_places=2)
+    uif = models.DecimalField(max_digits=16, decimal_places=2)
+    paye = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    def make_transactions(self, user, department=None):
+        sourceDoc = self
+        employee = self.employee.account
+        date = self.date
+        grossAmount = self.gross
+        payeAmount = self.paye
+        uifAmount = self.uif
+        if department is not None:
+            costCentre = department.costCentre
+        salaries = Account.objects.get(name="Salaries")
+        paye = Account.objects.get(name="PAYE")
+        uif = Account.objects.get(name="UIF")
+        sdl = Account.objects.get(name="SDL")
+        sars = Account.objects.get(name="SARS - PAYE")
+        #Initiate tracking variable
+        costToCompany = grossAmount
+        if self.paye:
+            #Increace employee account with paye ammount
+            Transaction(debitAccount=paye, creditAccount=employee,
+                    amount=payeAmount, date=date, recordedBy=user,
+                    sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+            #Move paye amount to SARS
+            Transaction(debitAccount=employee, creditAccount=sars,
+                    amount=payeAmount, date=date, recordedBy=user,
+                    sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+        else:
+            payeAmount = Decimal('0.00')
+        if uifAmount:
+            #Increace employee account with paye ammount
+            Transaction(debitAccount=uif, creditAccount=employee,
+                    amount=uifAmount, date=date, recordedBy=user,
+                    sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+            #Move paye amount to SARS
+            Transaction(debitAccount=employee, creditAccount=sars,
+                    amount=uifAmount, date=date, recordedBy=user,
+                    sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+            #Add company contribution
+            Transaction(debitAccount=uif, creditAccount=sars,
+                    amount=uifAmount, date=date, recordedBy=user,
+                    sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+            costToCompany += uifAmount
+        else:
+            uifAmount = Decimal('0.00')
+        #Increace employee account with nett salary
+        nett = grossAmount - payeAmount - uifAmount
+        Transaction(debitAccount=salaries, creditAccount=employee,
+                amount=nett, date=date, recordedBy=user,
+                sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+        #Add SDL transation
+        sdlAmount = grossAmount / Decimal('100.00')
+        Transaction(debitAccount=sdl, creditAccount=sars,
+                amount=sdlAmount, date=date, recordedBy=user,
+                sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
+        costToCompany += sdlAmount
+        #Create cost centre transaction
+        if department is not None:
+            models.CCTransaction(debitAccount=salaries, creditAccount=costCentre,
+                    amount=costToCompany, date=date, recordedBy=user,
+                    sourceDocument=sourceDoc, comments="", isConfirmed=True).save()
 
 class Invoice(SourceDoc):
     client = models.ForeignKey('Client')
@@ -314,10 +387,11 @@ class Department(models.Model):
 
 class Employee(models.Model):
     user = models.ForeignKey('auth.User')
+    initials = models.CharField(max_length=5)
     account = models.ForeignKey(Account)
     isActive = models.BooleanField(help_text='Is employee currently working?')
     def __unicode__(self):
-        return repr(self.user)
+        return self.user.get_full_name()
     def current_appointments(self, date=None):
         if date is None:
             date = datetime.date.now()

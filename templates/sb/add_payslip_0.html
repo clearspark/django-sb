@@ -1,0 +1,8 @@
+{% extends "sb/base.html" %}
+{% block sbContent %}
+    <h1>Adding new payslip</h2>
+    <p>Select employee</p>
+    {% for e in employees %}
+    <p><a href="{% url 'add-payslip-1' e.pk %}">{{e}}</a></p>
+    {% endfor %}
+{% endblock %}
