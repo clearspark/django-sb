@@ -5,14 +5,13 @@
     <form action="" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <table class='form-table'>
-            {{dform}}
             {{pform}}
         </table>
-        Reimbursements:
-        <table class='form-table'>
-            {{rforms}}
+        <h2>Cost centr contributions</h2>
+        <table>
+            {{cccforms}}
         </table>
-        <input type=submit value="submit"/>
+        <input type=submit value="Submit"/>
     </form>
 
 {% endblock %}

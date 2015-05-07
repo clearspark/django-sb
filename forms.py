@@ -83,16 +83,15 @@ class ClientStatementForm(forms.Form):
     startDate = forms.DateField(help_text="Date from which to show transactions", required=True)
 
 class CCContributionForm(forms.Form):
-    costCentre = forms.ModelChoiceField(queryset=models.CostCentre.objects.filter(cat__in=models.INTERNAL_SHEET_CATS))
-    fraction = forms.DecimalField(max_digits=3, decimal_places=2)
-    amount = forms.DecimalField(max_digits=16, decimal_places=2)
+    costCentre = forms.ModelChoiceField(queryset=models.CostCentre.objects.filter(cat__in=models.INTERNAL_SHEET_CATS), required=True)
+    fraction = forms.DecimalField(max_digits=5, decimal_places=4, required=True)
 
 class CCContributionFormSet(BaseFormSet):
     def clean(self):
         if any(self.errors):
             return
-        total = sum([f.cleaned_data['fraction'] for f in self.forms])
+        total = sum([f.cleaned_data.get('fraction', Decimal('0.0000')) for f in self.forms])
         if total > Decimal('1.0000'):
             raise forms.ValidationError("Fractions cannot exceed a total of 1")
         
-CCDistributionForm = formset_factory(form=CCContributionForm, formset=CCContributionFormSet)
+CCCForms = formset_factory(form=CCContributionForm, formset=CCContributionFormSet, extra=3)

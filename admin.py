@@ -56,7 +56,12 @@ class CCAdmin(AccountAdmin):
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = ['number', 'client']
     list_filter = ['client']
-    inlines = [InvoiceLineInline, TransactionInline]
+    inlines = [InvoiceLineInline, TransactionInline, CCTransactionInline]
+
+class PayslipAdmin(admin.ModelAdmin):
+    list_display = ['number', 'employee', 'gross', 'paye', 'uif', 'date']
+    list_filter = ['employee']
+    inlines = [TransactionInline, CCTransactionInline]
 
 class AppointmentInline(admin.TabularInline):
     model = models.Appointment
@@ -76,5 +81,6 @@ admin.site.register(models.Bookie)
 admin.site.register(models.Client)
 admin.site.register(models.Employee, EmployeeAdmin)
 admin.site.register(models.Invoice, InvoiceAdmin)
+admin.site.register(models.Payslip, PayslipAdmin)
 admin.site.register(models.InvoiceLine)
 admin.site.register(models.Department)

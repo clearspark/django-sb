@@ -115,6 +115,7 @@ def add_payslip_1(request, employee_pk):
     check_perm(request, 'canAddPayslip')
     employee = get_object_or_404(models.Employee, pk=employee_pk)
     if request.method == "GET":
+        #Payslip form
         past_payslips = models.Payslip.objects\
                 .filter(
                     employee=employee)\
@@ -135,10 +136,17 @@ def add_payslip_1(request, employee_pk):
         pform = forms.PaySlipForm(
                 initial={'number': doc_number,
                          'date': suggested_date})
-        #cccforms = forms.CCContributionFormSet()
+        
+        #Cost centre contribution form
+        cccforms = forms.CCCForms(
+                initial = [ 
+                    {'costCentre': a.department.costCentre, 'fraction': a.timeFraction} 
+                    for a in employee.current_appointments()]
+                )
     elif request.method == "POST":
-        pform = forms.PaySlipForm(request.POST)
-        if pform.is_valid():
+        pform = forms.PaySlipForm(request.POST, request.FILES)
+        cccforms = forms.CCCForms(request.POST)
+        if pform.is_valid() and cccforms.is_valid():
             payslip = pform.save(commit=False)
             payslip.recordedBy = request.user
             payslip.docType = 'payslip'
@@ -146,17 +154,21 @@ def add_payslip_1(request, employee_pk):
             payslip.save()
             try:
                 payslip.make_transactions(request.user)
+                for ccc in cccforms.cleaned_data:
+                    if 'costCentre' in ccc:
+                        payslip.add_cost_centre_contribution(ccc['costCentre'], ccc['fraction'], request.user)
                 success = True
             except Exception as e:
                 payslip.delete()
-                messages.error(request, "Unable to create transactions")
+                messages.error(request, "Unable to create transactions. Payslip not added!")
                 success = False
+                from django.conf import settings
                 if settings.DEBUG:
                     raise e
             if success:
                 return redirect(payslip)
     return render(request, "sb/add_payslip_1.html", 
-            {'employee': employee, 'pform': pform})#, 'rforms': rforms})
+            {'employee': employee, 'pform': pform, 'cccforms': cccforms})
 
 import decimal
 @login_required

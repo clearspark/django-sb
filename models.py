@@ -1,4 +1,6 @@
-from datetime import date, datetime, timedelta
+from datetime import timedelta
+import datetime
+
 from decimal import Decimal
 
 from django.db import models
@@ -187,17 +189,15 @@ class Payslip(SourceDoc):
     employee = models.ForeignKey('Employee')
     date = models.DateField()
     gross = models.DecimalField(max_digits=16, decimal_places=2)
-    uif = models.DecimalField(max_digits=16, decimal_places=2)
-    paye = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
-    def make_transactions(self, user, department=None):
+    uif = models.DecimalField(max_digits=16, decimal_places=2, default=Decimal('0.00'))
+    paye = models.DecimalField(max_digits=16, decimal_places=2, default=Decimal('0.00'))
+    def make_transactions(self, user):
         sourceDoc = self
         employee = self.employee.account
         date = self.date
         grossAmount = self.gross
         payeAmount = self.paye
         uifAmount = self.uif
-        if department is not None:
-            costCentre = department.costCentre
         salaries = Account.objects.get(name="Salaries")
         paye = Account.objects.get(name="PAYE")
         uif = Account.objects.get(name="UIF")
@@ -243,11 +243,16 @@ class Payslip(SourceDoc):
                 amount=sdlAmount, date=date, recordedBy=user,
                 sourceDocument=sourceDoc, comments="", isConfirmed = True).save()
         costToCompany += sdlAmount
-        #Create cost centre transaction
-        if department is not None:
-            models.CCTransaction(debitAccount=salaries, creditAccount=costCentre,
-                    amount=costToCompany, date=date, recordedBy=user,
-                    sourceDocument=sourceDoc, comments="", isConfirmed=True).save()
+    def add_cost_centre_contribution(self, costCentre, fraction, user, comments=""):
+        salaries = Account.objects.get(name="Salaries")
+        amount = self.cost_to_company() * fraction
+        CCTransaction(debitAccount=salaries, creditAccount=costCentre,
+                    amount=amount, date=self.date, recordedBy=user,
+                    sourceDocument=self, comments=comments, isConfirmed=True).save()
+    def cost_to_company(self):
+        return self.gross * Decimal('1.010') + self.uif
+
+
 
 class Invoice(SourceDoc):
     client = models.ForeignKey('Client')
@@ -394,8 +399,8 @@ class Employee(models.Model):
         return self.user.get_full_name()
     def current_appointments(self, date=None):
         if date is None:
-            date = datetime.date.now()
-        return self.appointment_set.objects.filter(startDate__lte=date, endDate__gte=date).all()
+            date = datetime.date.today()
+        return self.appointment_set.filter(startDate__lte=date, endDate__gte=date).all()
 
 class Appointment(models.Model):
     employee = models.ForeignKey(Employee)
