@@ -403,7 +403,7 @@ class Appointment(models.Model):
     department = models.ForeignKey(Department)
     startDate = models.DateField()
     endDate = models.DateField()
-    timeFraction = models.DecimalField(max_digits=4, decimal_places=4)
+    timeFraction = models.DecimalField(max_digits=5, decimal_places=4)
 
 #NON-DJANGO models
 class StatementTransaction(object):
