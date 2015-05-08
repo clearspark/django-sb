@@ -367,3 +367,88 @@ def regen_invoice(request, invoice_nr):
     invoice.html = invoice.make_html()
     invoice.save()
     return redirect(invoice)
+
+@login_required
+def claim_edit(request, pk=None):
+    if pk is not None:
+        claim = models.ExpenseClaim.objects.get(pk=pk)
+        role = claim.get_role(request.user)
+        if role == 'unrelated':
+            raise PermissionDenied("You are not authorised to edit this expense claim.")
+    else:
+        claim = None
+    if request.method == 'POST':
+        form = forms.NewExpenseClaimForm(request.POST, instance=claim)
+        if form.is_valid():
+            claim = form.save(commit=False)
+            employee = models.Employee.objects.get(user=request.user)
+            claim.claimant = employee
+            claim.save()
+            return redirect(claim)
+    else:
+        if pk is None:
+            form = forms.NewExpenseClaimForm()
+        else:
+            form = forms.NewExpenseClaimForm(instance=claim)
+    return render(request, 'sb/generic_form.html', {'form': form, 'heading': 'New claim'})
+
+@login_required
+def claim_add_supporting_docs(request, pk):
+    claim = get_object_or_404(models.ExpenseClaim, pk=pk)
+    role = claim.get_role(request.user)
+    if role == 'unrelated':
+        raise PermissionDenied("You are not authorised to edit this expense claim.")
+    if request.method == 'POST':
+        form = forms.SupportingDocForm(request.POST, request.FILES)
+        if form.is_valid():
+            doc = form.save(commit=False)
+            doc.subject = claim
+            doc.save()
+            return redirect(claim)
+    else:
+        form = forms.SupportingDocForm()
+    return render(request, 'sb/generic_form.html',
+            {'form': form, 'has_files': True, 'heading': 'Adding supporting document'})
+    
+@login_required
+def claim_detail(request, pk):
+    claim = get_object_or_404(models.ExpenseClaim, pk=pk)
+    role = claim.get_role(request.user)
+    return render(request, 'sb/claim_detail.html', {'claim': claim, 'role': role})
+
+@login_required
+def submit_claim(request, pk):
+    claim = get_object_or_404(models.ExpenseClaim, pk=pk)
+    role = claim.get_role(request.user)
+    if role != 'claimant':
+        raise PermissionDenied("You are not authorised to edit this expense claim.")
+    claim.submit()
+    messages.info(request, "Your claim has been submitted for review")
+    return redirect(claim)
+
+@login_required
+def review_claim(request, pk):
+    claim = get_object_or_404(models.ExpenseClaim, pk=pk)
+    role = claim.get_role(request.user)
+    if role != 'reviewer':
+        raise PermissionDenied("You are not authorised to review this expense claim.")
+    if request.method == 'POST':
+        form = forms.ExpenseClaimReviewForm(request.POST, instance=claim)
+        if form.is_valid():
+            claim = form.save(commit=False)
+            claim.reviewedBy = models.Employee.objects.get(user=request.user)
+            claim.reviewDate = datetime.date.today()
+            claim.save()
+            return redirect(claim)
+    else:
+        form = forms.ExpenseClaimReviewForm(instance=claim)
+    return render(
+            request, 'sb/generic_form.html',
+            {'form': form, 'has_files': True, 'instance': claim,
+                'heading': 'Reviewing claim: %s' %claim.__unicode__()},
+        )
+
+@login_required
+def claim_list(request):
+    claims = models.ExpenseClaim.objects.all()
+    return render(request, 'sb/expense_claim_list.html', {'objects': claims})

@@ -95,3 +95,15 @@ class CCContributionFormSet(BaseFormSet):
             raise forms.ValidationError("Fractions cannot exceed a total of 1")
         
 CCCForms = formset_factory(form=CCContributionForm, formset=CCContributionFormSet, extra=3)
+
+NewExpenseClaimForm = modelform_factory(
+        models.ExpenseClaim, 
+        fields=['department', 'claimComments', 'claimAmount'])
+
+ExpenseClaimReviewForm = modelform_factory(
+        models.ExpenseClaim, 
+        fields=['reviewComments', 'approvedAmount'])
+
+SupportingDocForm = modelform_factory(
+        models.SupportingDoc, 
+        fields=['description', 'document'])

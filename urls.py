@@ -19,5 +19,11 @@ urlpatterns = patterns('sb.views',
     url(r'^extracts/(?P<dataType>.*)/?', 'extract', name='extract'),
     url(r'^apply_interest/', 'apply_interest', name='apply-interest'),
     url(r'^client_statements/?$', 'client_account_statement', name='client-statement-view'),
+    url(r'^claim/new/?$', 'claim_edit', name='claim-new'),
+    url(r'^claim/detail/(?P<pk>\d*)/?$', 'claim_detail', name='claim-detail'),
+    url(r'^claim/submit/(?P<pk>\d*)/?$', 'submit_claim', name='claim-submit'),
+    url(r'^claim/review/(?P<pk>\d*)/?$', 'review_claim', name='claim-review'),
+    url(r'^claim/add/document/(?P<pk>\d*)/?$', 'claim_add_supporting_docs', name='claim-add-doc'),
+    url(r'^claim/list/?$', 'claim_list', name='claim-list'),
 
 )

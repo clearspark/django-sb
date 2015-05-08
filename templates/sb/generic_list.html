@@ -1,0 +1,10 @@
+{% extends "sb/base.html" %}
+
+{% block sbContent %}
+<h1>{{heading}}</h2>
+<ul>
+    {% for o in objects %}
+        <ul>{{o}}</ul>
+    {% endfor %}
+</ul>
+{% endblock %}

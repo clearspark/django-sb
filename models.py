@@ -1,3 +1,5 @@
+#vim: set foldmethod=indent
+
 from datetime import timedelta
 import datetime
 
@@ -7,6 +9,8 @@ from django.db import models
 from django.core.urlresolvers import reverse
 from django.template import Template, Context
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 
 #from mptt.models import MPTTModel, TreeForeignKey
 
@@ -252,8 +256,6 @@ class Payslip(SourceDoc):
     def cost_to_company(self):
         return self.gross * Decimal('1.010') + self.uif
 
-
-
 class Invoice(SourceDoc):
     client = models.ForeignKey('Client')
     html = models.TextField(blank=True)
@@ -342,7 +344,6 @@ class TransactionParent(models.Model):
     def __unicode__(self):
         return "{} {}:{} {}".format(self.date, self.debitAccount, self.creditAccount, self.amount)
 
-
 class Transaction(TransactionParent):
     debitAccount = models.ForeignKey("Account", related_name="debits")
     creditAccount = models.ForeignKey("Account", related_name="credits")
@@ -387,6 +388,7 @@ class Department(models.Model):
     invoiceDeductionFraction = models.DecimalField(max_digits=4, decimal_places=4)
     costCentre = models.ForeignKey('CostCentre')
     description = models.TextField()
+    expenseReviewers = models.ManyToManyField('Employee')
     def __unicode__(self):
         return self.shortName
 
@@ -410,6 +412,67 @@ class Appointment(models.Model):
     endDate = models.DateField()
     timeFraction = models.DecimalField(max_digits=5, decimal_places=4)
 
+def supporting_doc_file_path(instance, filename):
+    return "sb/src_docs/{}/{}".format(instance.created.date().isoformat(), filename)
+class SupportingDoc(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    subject = GenericForeignKey('content_type', 'object_id')
+    description = models.CharField(
+            max_length=250, 
+            help_text='''Brief description of document, what it is and what it says.
+                         Example: "Invoice showing expense incurred"''')
+    document = models.FileField(
+            upload_to=supporting_doc_file_path, 
+            verbose_name="File")
+
+class ExpenseClaim(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    claimant = models.ForeignKey('Employee', related_name='expenseClaimsMade')
+    department = models.ForeignKey('Department')
+    claimAmount = models.DecimalField(max_digits=16, decimal_places=2)
+    claimComments = models.TextField(blank=True)
+    submitted = models.BooleanField(default=False)
+    reviewDate = models.DateTimeField(null=True, blank=True, editable=False)
+    reviewedBy = models.ForeignKey('Employee', related_name='expenseClaimsReviewd', null=True, blank=True)
+    reviewComments = models.TextField(blank=True)
+    approvedAmount = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    supportingDoc_set = GenericRelation(SupportingDoc, related_query_name='expenseClaims')
+    def __unicode__(self):
+        return '{claimant}: {amount} ({date})'.format(
+                claimant=self.claimant,
+                amount=self.claimAmount,
+                date=self.created.date(),
+                )
+    def get_absolute_url(self):
+        return reverse('claim-detail', kwargs={'pk': self.pk})
+    def submit(self, False):
+        '''Sends email to potential reviewer and marks claim for review'''
+        pass
+    def add_supporting_doc(self, doc):
+        '''Adds a supporting document to the claim'''
+        pass
+    def get_role(self, user):
+        if self.claimant.user == user:
+            return 'claimant'
+        elif self.department.expenseReviewers.filter(pk=user.pk).exists():
+            return 'reviewer'
+        else:
+            return 'unrelated'
+    def status(self):
+        if not self.submitted:
+            return 'draft'
+        if self.submitted and self.reviewedBy is None:
+            return 'submitted'
+        if self.reviewedBy is not None:
+            return 'reviewed'
+        return 'unknown'
+    def submit(self):
+        self.submitted = True
+        self.save()
+
+    
 #NON-DJANGO models
 class StatementTransaction(object):
     def __init__(self, reference, date, description, debit, credit, balance):
@@ -481,6 +544,3 @@ class Statement(object):
         t = Template(self.client.statementTemplate)
         c = Context({'statement': self, 'STATIC_URL': settings.STATIC_URL})
         return t.render(c)
-
-class PaySlip(object):
-    pass

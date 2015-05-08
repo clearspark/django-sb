@@ -1,0 +1,60 @@
+{% extends "sb/base.html" %}
+
+{% block sbContent %}
+
+    <h1>{{claim}}</h2>
+    <h2>Details</h2>
+    <p>
+        <strong>Status:</strong> {{claim.status}}
+    </p>
+    <p>
+        <strong>Claim ID:</strong> {{claim.pk}}
+    </p>
+    <p>
+        <strong>Claimant:</strong> {{claim.claimant}}
+    </p>
+    <p>
+        <strong>Amount:</strong>  R {{claim.claimAmount}}
+    </p>
+    <p>
+        <strong>Claimant comments:</strong> {{claim.claimComments}}
+    </p>
+    <p>
+    <p>
+        <strong>Department:</strong> {{claim.department.longName}}
+    </p>
+        <strong>Reviewed by:</strong> {{claim.reviewedBy|default:"N/A"}}
+    </p>
+    <p>
+        <strong>Reviewer comments:</strong> {{claim.reviewComments|default:"N/A"}}
+    </p>
+    <p>
+        <strong>Approved amount:</strong>
+        {% if claim.approvedAmount != None %}
+            R {{claim.approvedAmount}}
+        {% else %}
+            N/A 
+        {% endif %}
+    </p>
+
+
+
+    <h2>Supporting Documents</h2>
+
+    <ul>
+        {% for doc in claim.supportingDoc_set.all %}
+            <li><a href="{{doc.document.url}}">{{doc}} - {{doc.description}}</a></li>
+        {% endfor %}
+    </ul>
+
+    <h2>Actions:</h2>
+    <ul>
+        {% if role == "claimant" %}
+            <li><a href="{% url 'claim-submit' pk=claim.pk %}">Submit for review</a></li>
+        {% endif %}
+        <li><a href="{% url 'claim-add-doc' pk=claim.pk %}">Add related document</a></li>
+        <li><a href="{% url 'claim-review' pk=claim.pk %}">Review claim</a></li>
+    </ul>
+
+
+{% endblock %}

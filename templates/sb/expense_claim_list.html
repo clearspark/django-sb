@@ -1,0 +1,27 @@
+{% extends "sb/base.html" %}
+
+{% block sbContent %}
+<h1>Expense Claims</h2>
+<table class='content-table'>
+    <thead>
+        <tr>
+            <th>Claim ID</th>
+            <th>Created date</th>
+            <th>Claimant</th>
+            <th>Amount</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for o in objects %}
+            <tr>
+                <td><a href="{{o.get_absolute_url}}">{{o.pk}}</a></td>
+                <td><a href="{{o.get_absolute_url}}">{{o.created.date}}</a></td>
+                <td><a href="{{o.get_absolute_url}}">{{o.claimant}}</a></td>
+                <td><a href="{{o.get_absolute_url}}">{{o.claimAmount}}</a></td>
+                <td><a href="{{o.get_absolute_url}}">{{o.status}}</a></td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

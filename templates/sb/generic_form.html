@@ -2,7 +2,7 @@
 
 {% block sbContent %}
 <h1>{{heading}}</h2>
-<form action="" method="POST">
+<form action="" method="POST"{% if has_files %} enctype="multipart/form-data"{% endif %}>
     {% csrf_token %}
     <table class='form-table'>
         {{form}}
