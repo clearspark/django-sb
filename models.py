@@ -258,6 +258,7 @@ class Payslip(SourceDoc):
 
 class Invoice(SourceDoc):
     client = models.ForeignKey('Client')
+    isQuote = models.BooleanField(default=False)
     html = models.TextField(blank=True)
     invoiceDate = models.DateField()
     finalized = models.BooleanField(default=False)

@@ -73,7 +73,11 @@
     <body>
 		<div class="letterhead">
             <img src="{{STATIC_URL}}cs_website/images/logo_white_smaller.png"/> 
-            <h1>TAX INVOICE</h1>
+            {% if invoice.isQuote %}
+                <h1>QUOTE</h1>
+            {% else %}
+                <h1>TAX INVOICE</h1>
+            {% endif %}
 		</div>
         <div class="wrapper">
 			<div>
@@ -113,19 +117,23 @@
             <div style="clear:both;">
                 <p><strong>Terms and conditions:</strong></p>
 
-                <p>Invoices are payable in full within 30 days of invoice date.</p>
-				<p>Amounts over 30 days in arrears will attract interest at a rate of 12% p/a, compounded monthly.</p>
-				<p>Payments will be set off against the oldest unpaid invoice first.</p>
+                {% if invoice.isQuote %}
+                    <p>This quote valid for 120 days</p>
+                {% else %}
+                    <p>Invoices are payable in full within 30 days of invoice date.</p>
+                    <p>Amounts over 30 days in arrears will attract interest at a rate of 12% p/a, compounded monthly.</p>
+                    <p>Payments will be set off against the oldest unpaid invoice first.</p>
 
-                <p><strong>Payment details:</strong></p>
+                    <p><strong>Payment details:</strong></p>
 
-                <p>
-					ClearSpark (Pty) Ltd<br />
-					FNB Business Cheque Account<br />
-					Acc #: 623 5021 7446<br />
-					Branch: Tygerberg<br />
-					Branch Code: 201410
-				</p>
+                    <p>
+                        ClearSpark (Pty) Ltd<br />
+                        FNB Business Cheque Account<br />
+                        Acc #: 623 5021 7446<br />
+                        Branch: Tygerberg<br />
+                        Branch Code: 201410
+                    </p>
+                {% endif %}
             </div>
         </div>
     </body>

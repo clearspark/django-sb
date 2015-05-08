@@ -191,6 +191,7 @@ def send_invoice(request):
             sourceDoc.clientSummary = form.cleaned_data['clientSummary']
             sourceDoc.docType = 'invoice-out'
             sourceDoc.client = client
+            sourceDoc.isQuote = form.cleaned_data['isQuote']
             sourceDoc.save()
             for lineItem in lineForms.save(commit=False):
                 #lineItem = l.save(commit=False)
@@ -198,7 +199,8 @@ def send_invoice(request):
                 lineItem.save()
             sourceDoc.html = sourceDoc.make_html()
             sourceDoc.save()
-            sourceDoc.make_transactions(form.cleaned_data['department'], request.user)
+            if not sourceDoc.isQuote:
+                sourceDoc.make_transactions(form.cleaned_data['department'], request.user)
             return redirect(sourceDoc)
     return render(request, "sb/send_invoice.html", 
             {'form': form, 'lineforms': lineForms})
