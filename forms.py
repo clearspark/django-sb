@@ -43,7 +43,7 @@ class DateRangeFilter(forms.Form):
 
 class SendInvoiceForm(forms.Form):
     client = forms.ModelChoiceField(models.Client.objects.all())
-    isQuote = forms.BooleanField(initial=False)
+    isQuote = forms.BooleanField(initial=False, required=False)
     date = forms.DateField(required=True)
     comments = forms.CharField(required=False, widget=forms.Textarea(attrs={'cols': 90}),
             help_text="Goes in accounting app, client does not see this.")

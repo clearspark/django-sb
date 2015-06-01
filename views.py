@@ -191,7 +191,7 @@ def send_invoice(request):
             sourceDoc.clientSummary = form.cleaned_data['clientSummary']
             sourceDoc.docType = 'invoice-out'
             sourceDoc.client = client
-            sourceDoc.isQuote = form.cleaned_data['isQuote']
+            sourceDoc.isQuote = form.cleaned_data.get('isQuote', False)
             sourceDoc.save()
             for lineItem in lineForms.save(commit=False):
                 #lineItem = l.save(commit=False)
