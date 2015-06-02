@@ -22,7 +22,7 @@
     </form>
 
     <h3>
-        <a href='{% url extract dataType='transactions' %}?begin={{begin|default:''}}&end={{end|default:''}}'>Click to Download currently displayed transactions in CSV format</a>
+        <a href='{% url 'extract' dataType='transactions' %}?begin={{begin|default:''}}&end={{end|default:''}}'>Click to Download currently displayed transactions in CSV format</a>
         <p>
             (This function is not complete and will not apply the account filters, only the date filters)
         </p>
