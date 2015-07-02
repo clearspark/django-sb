@@ -97,7 +97,11 @@
 				</div>
 				<div class="column right">
 					<p style="text-align:right">Invoice# {{invoice.number}}</p>
-					<p style="text-align:right">Invoice date: &nbsp;{{invoice.invoiceDate}}</p>
+                    {% if invoice.isQuote %}
+                        <p style="text-align:right">Quote date: &nbsp;{{invoice.invoiceDate}}</p>
+                    {% else %}
+                        <p style="text-align:right">Invoice date: &nbsp;{{invoice.invoiceDate}}</p>
+                    {% endif %}
 				</div>
 			</div>
 			<div>
