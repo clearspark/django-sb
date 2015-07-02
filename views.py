@@ -290,9 +290,9 @@ def extract(request, dataType):
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="Transaction_%s.csv"' %datetime.date.today().isoformat()
         writer = csv.writer(response, dialect='excel')
-        writer.writerow(['Date', 'Debit account', 'Credit account', 'Amount', 'Comment', 'Document'])
+        writer.writerow(['Date', 'Debit account', 'Debit account code', 'Credit account', 'Credit account code', 'Amount', 'Comment', 'Document'])
         for t in transactions:
-            writer.writerow( [t.date, t.debitAccount.long_name(), t.creditAccount.long_name(), t.amount, t.comments, t.sourceDocument.number if t.sourceDocument else ''] )
+            writer.writerow( [t.date, t.debitAccount.long_name(), t.debitAccount.gl_code, t.creditAccount.long_name(), t.creditAccount.gl_code, t.amount, t.comments, t.sourceDocument.number if t.sourceDocument else ''] )
         return response
     if dataType == 'trial balance':
         response = HttpResponse(content_type='text/csv')
