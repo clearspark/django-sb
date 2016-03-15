@@ -1,3 +1,4 @@
+{% load staticfiles %}
 <html>
     <head>
         <style type="text/css">
@@ -72,7 +73,7 @@
     </head>
     <body>
 		<div class="letterhead">
-            <img src="{{STATIC_URL}}cs_website/images/logo_white_smaller.png"/> 
+            <img src="{% static 'cs_website/images/logo_white_smaller.png' %}"/> 
             {% if invoice.isQuote %}
                 <h1>QUOTE</h1>
             {% else %}

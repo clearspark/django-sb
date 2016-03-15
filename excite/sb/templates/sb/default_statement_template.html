@@ -1,4 +1,5 @@
 {% load humanize %}
+{% load staticfiles %}
 <html>
     <head>
         <style type="text/css">
@@ -86,7 +87,7 @@
     </head>
     <body>
 		<div class="letterhead">
-            <img src="{{STATIC_URL}}cs_website/images/logo_white_smaller.png"/> 
+            <img src="{% static 'cs_website/images/logo_white_smaller.png' %}"/> 
             <h1>Account<br/>Statement</h1>
 		</div>
         <div class="wrapper">
