@@ -447,7 +447,7 @@ def review_claim(request, pk):
     return render(
             request, 'sb/generic_form.html',
             {'form': form, 'has_files': True, 'instance': claim,
-                'heading': 'Reviewing claim: %s' %claim.__unicode__()},
+                'heading': 'Reviewing claim: %s' %claim.__str__()},
         )
 
 @login_required

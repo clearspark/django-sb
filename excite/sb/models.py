@@ -35,7 +35,7 @@ class Account(models.Model):
         ordering = ["name"]
     def long_name(self):
         if self.parent:
-            return self.parent.__unicode__()+" > "+self.name
+            return self.parent.__str__()+" > "+self.name
         else:
             return self.name
     def long_href(self):
@@ -43,7 +43,7 @@ class Account(models.Model):
             return self.parent.href()+"&gt"+self.href()
         else:
             return self.href()
-    def __unicode__(self):
+    def __str__(self):
         return self.long_name()
     def transactions(self):
         return Transaction.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).order_by("date").all()
@@ -140,7 +140,7 @@ class Client(models.Model):
     invoiceOffset = models.IntegerField(default=0, help_text='''The invoice number will be increaced by this number.
     The reason this is needed is that not all invoices in the database are explicitly represented as such and this ''' )
     address = models.TextField(help_text="This will be used for generating invoices and statements. HTML tags can be used. Should include Company name, registration, VAT nr etc.")
-    def __unicode__(self):
+    def __str__(self):
         return self.displayName
     def get_new_invoice_nr(self):
         num = self.invoice_set.count() + self.invoiceOffset + 1
@@ -161,7 +161,7 @@ class SourceDoc(models.Model):
         ('payslip', 'Payslip'),
         ('other', 'Other')),
         help_text='The type of document being recorded/created')
-    def __unicode__(self):
+    def __str__(self):
         return unicode(self.number)
     def transaction_count(self):
         return self.transactions.all().count()
@@ -262,7 +262,7 @@ class Invoice(SourceDoc):
     finalized = models.BooleanField(default=False)
     clientSummary = models.CharField(max_length=200,
             help_text='One or two sentence description of what invoice is for.  Will shown on invoice above line items. Possibly on statements.')
-    def __unicode__(self):
+    def __str__(self):
         return self.number
     def get_total_excl(self):
         return self.invoiceline_set.aggregate(models.Sum('amount'))['amount__sum']
@@ -340,7 +340,7 @@ class TransactionParent(models.Model):
         return '<a href="%s">%s</a>' %(self.get_absolute_url(), self.date)
     def get_absolute_url(self):
         return reverse("transaction-details", kwargs={"pk": self.pk})
-    def __unicode__(self):
+    def __str__(self):
         return "{} {}:{} {}".format(self.date, self.debitAccount, self.creditAccount, self.amount)
 
 class Transaction(TransactionParent):
@@ -377,7 +377,7 @@ class Bookie(models.Model):
     canReceiveInvoice = models.BooleanField(default=False)
     canAddPayslip = models.BooleanField(default=False)
     canApplyInterest = models.BooleanField(default=False)
-    def __unicode__(self):
+    def __str__(self):
         return self.user.get_full_name()
 
 class Department(models.Model):
@@ -388,7 +388,7 @@ class Department(models.Model):
     costCentre = models.ForeignKey('CostCentre')
     description = models.TextField()
     expenseReviewers = models.ManyToManyField('Employee')
-    def __unicode__(self):
+    def __str__(self):
         return self.shortName
 
 class Employee(models.Model):
@@ -396,7 +396,7 @@ class Employee(models.Model):
     initials = models.CharField(max_length=5)
     account = models.ForeignKey(Account)
     isActive = models.BooleanField(help_text='Is employee currently working?')
-    def __unicode__(self):
+    def __str__(self):
         return self.user.get_full_name()
     def current_appointments(self, date=None):
         if date is None:
@@ -438,7 +438,7 @@ class ExpenseClaim(models.Model):
     reviewComments = models.TextField(blank=True)
     approvedAmount = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     supportingDoc_set = GenericRelation(SupportingDoc, related_query_name='expenseClaims')
-    def __unicode__(self):
+    def __str__(self):
         return '{claimant}: {amount} ({date})'.format(
                 claimant=self.claimant,
                 amount=self.claimAmount,

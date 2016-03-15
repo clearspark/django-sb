@@ -1,7 +1,9 @@
 {% extends "sb/app_site_glue.html" %}
 
+{% load staticfiles %}
+
 {% block sbHead %}
-    <link href="{{STATIC_URL}}sb/sb.css" rel="stylesheet" type="text/css"/>
+    <link href="{% static 'sb/sb.css' %}" rel="stylesheet" type="text/css"/>
     <script type="text/javascript">
         $(document).ready(function() {
             $("td:empty").html("&nbsp;");
