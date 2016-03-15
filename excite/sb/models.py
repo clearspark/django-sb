@@ -446,7 +446,7 @@ class ExpenseClaim(models.Model):
                 )
     def get_absolute_url(self):
         return reverse('claim-detail', kwargs={'pk': self.pk})
-    def submit(self, False):
+    def submit(self):
         '''Sends email to potential reviewer and marks claim for review'''
         pass
     def add_supporting_doc(self, doc):
