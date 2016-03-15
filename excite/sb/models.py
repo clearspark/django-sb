@@ -84,9 +84,7 @@ class Account(models.Model):
             return "Cr {}".format(-balance)
     def get_average_balance(self, begin, end):
         num_days = (end - begin).days + 1
-        print 'num_days', num_days
         avg_balance = self.balance(end=(begin-timedelta(days=1)))
-        print 'starting balance', avg_balance
         debits = self.get_debits(begin, end)
         credits = self.get_credits(begin, end)
         for d in debits:
