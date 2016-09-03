@@ -162,7 +162,7 @@ class SourceDoc(models.Model):
         ('other', 'Other')),
         help_text='The type of document being recorded/created')
     def __str__(self):
-        return unicode(self.number)
+        return str(self.number)
     def transaction_count(self):
         return self.transactions.all().count()
     def get_absolute_url(self):
