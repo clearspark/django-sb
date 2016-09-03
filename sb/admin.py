@@ -1,15 +1,15 @@
 from django.contrib import admin
-from autocomplete_light import modelform_factory
+#from autocomplete_light import modelform_factory
 from sb import models
 
 class TransactionInline(admin.StackedInline):
     model = models.Transaction
-    form = modelform_factory(models.Transaction, fields='__all__')
+    #form = modelform_factory(models.Transaction, fields='__all__')
     extra = 2
 
 class CCTransactionInline(admin.StackedInline):
     model = models.CCTransaction
-    form = modelform_factory(models.CCTransaction, fields='__all__')
+    #form = modelform_factory(models.CCTransaction, fields='__all__')
     extra = 2
 
 class InvoiceLineInline(admin.StackedInline):
@@ -17,7 +17,7 @@ class InvoiceLineInline(admin.StackedInline):
     extra = 2
 
 class TransactionAdmin(admin.ModelAdmin):
-    form = modelform_factory(models.Transaction, fields='__all__')
+    #form = modelform_factory(models.Transaction, fields='__all__')
     list_display = ["date", "isConfirmed", "debitAccount", "creditAccount", "amount", "sourceDocument", "comments"]
     list_filter = ["date",  "debitAccount", "creditAccount"]
     save_on_top = True

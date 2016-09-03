@@ -1,7 +1,10 @@
+{% load bootstrap3 %}
 <h3>Dates shown:</h3>
 <form>
-    <table class="form-table">
-        {{dateform.as_table}}
-    </table>
-    <input type="submit" value="Filter"/>
+	{% bootstrap_form dateform %}
+	{% buttons %}
+		<button type="submit" class="btn btn-primary">
+			{% bootstrap_icon "filter" %} Filter
+		</button>
+	{% endbuttons %}
 </form>

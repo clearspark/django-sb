@@ -136,7 +136,7 @@ class Client(models.Model):
     displayName = models.CharField(max_length=100)
     invoiceTemplate = models.TextField(blank=True, default='{% include "sb/default_invoice_template.html" %}')
     statementTemplate = models.TextField(blank=True)
-    invoiceSuffix = models.CharField(max_length=12)
+    invoiceSuffix = models.CharField(max_length=12, unique=True)
     invoiceOffset = models.IntegerField(default=0, help_text='''The invoice number will be increaced by this number.
     The reason this is needed is that not all invoices in the database are explicitly represented as such and this ''' )
     address = models.TextField(help_text="This will be used for generating invoices and statements. HTML tags can be used. Should include Company name, registration, VAT nr etc.")

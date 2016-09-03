@@ -2,13 +2,13 @@ from decimal import Decimal
 from django import forms
 from django.forms.models import modelformset_factory
 from django.forms.formsets import formset_factory, BaseFormSet
-from autocomplete_light import modelform_factory
+#from autocomplete_light import modelform_factory
 from sb import models
 
-PaySlipForm = modelform_factory(
+class PaySlipForm(forms.ModelForm):
+    class Meta:
         models.Payslip,
         exclude=['docType', 'employee'],
-        )
 
 class ReimbursementForm(forms.Form):
     amount = forms.DecimalField(decimal_places=2, required=False)
@@ -97,14 +97,17 @@ class CCContributionFormSet(BaseFormSet):
         
 CCCForms = formset_factory(form=CCContributionForm, formset=CCContributionFormSet, extra=3)
 
-NewExpenseClaimForm = modelform_factory(
+class NewExpenseClaimForm(forms.ModelForm):
+    class Meta:
         models.ExpenseClaim, 
-        fields=['department', 'claimComments', 'claimAmount'])
+        fields=['department', 'claimComments', 'claimAmount']
 
-ExpenseClaimReviewForm = modelform_factory(
+class ExpenseClaimReviewForm(forms.ModelForm):
+    class Meta:
         models.ExpenseClaim, 
-        fields=['reviewComments', 'approvedAmount'])
+        fields=['reviewComments', 'approvedAmount']
 
-SupportingDocForm = modelform_factory(
+class SupportingDocForm(forms.ModelForm):
+    class Meta:
         models.SupportingDoc, 
-        fields=['description', 'document'])
+        fields=['description', 'document']
