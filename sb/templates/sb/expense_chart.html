@@ -1,0 +1,56 @@
+{% extends 'sb/app_site_glue.html' %}
+
+{% load static %}
+
+{% block sbHead %}
+	<script language="javascript" type="text/javascript" src="{% static 'flot/jquery.flot.js' %}"></script>
+	<script language="javascript" type="text/javascript" src="{% static 'flot/jquery.flot.pie.js' %}"></script>
+	<script type="text/javascript">
+		var data = [];
+		{% for e in expenses %}
+			data.push({label: '{{e.name}}', data: {{e.period_balance}} });
+		{% endfor %}
+		$(document).ready(function(){
+			$.plot($("#placeholder"), data, {
+				series: {
+					pie: { 
+						show: true
+					}
+				}
+			});
+		});
+
+	</script>
+
+{% endblock %}
+
+
+{% block sbContent %}
+	<h1>Chart showing expenses</h1>
+
+	{% include 'sb/datefilter.html' %}
+
+	<div class="demo-container">
+		<div id="placeholder" style="width:600px;height:300px"></div>
+	</div>
+
+	<table class='table'>
+		<thead>
+			<tr>
+				<th>Expense</th>
+				<th>Amount</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for expense in expenses %}
+				<tr>
+					<td>{{expense}}</td>
+					<td>{{expense.period_balance}}</td>
+				</tr>
+			{% empty %}
+					<td> - </td>
+					<td> - </td>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock %}

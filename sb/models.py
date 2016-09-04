@@ -19,6 +19,7 @@ INTERNAL_ACCOUNT_CATEGORIES = (("cost_centre", "Cost centre"),)
 ALL_ACCOUNT_CATEGORIES = GAAP_ACCOUNT_CATEGORIES + INTERNAL_ACCOUNT_CATEGORIES
 INCOME_STATEMENT_CATS = ('income', 'expense',)
 BALANCE_SHEET_CATS = ('equity', 'asset', 'liability',)
+GAAP_CATS = INCOME_STATEMENT_CATS + BALANCE_SHEET_CATS
 INTERNAL_SHEET_CATS = ('cost_centre',)
 
 def url_to_edit_object(object):
@@ -46,27 +47,42 @@ class Account(models.Model):
     def __str__(self):
         return self.long_name()
     def transactions(self):
-        return Transaction.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).order_by("date").all()
-    def get_transactions(self, begin=None, end=None):
+        if self.cat in GAAP_CATS:
+            return Transaction.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).order_by("date")
+        else:
+            return CCTransaction.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).order_by("date").all()
+    def get_transactions(self, begin=None, end=None, isConfirmed=None):
         transactions = self.transactions()
         if begin is not None:
             transactions = transactions.filter(date__gte=begin)
         if end is not None:
             transactions = transactions.filter(date__lte=end)
+        if isConfirmed is not None:
+            transactions = transactions.filter(isConfirmed=isConfirmed)
         return transactions
-    def get_debits(self, begin=None, end=None):
-        debits = self.debits
+    def get_debits(self, begin=None, end=None, isConfirmed=None):
+        if self.cat in GAAP_CATS:
+            debits = self.debits
+        else:
+            debits = self.cc_debits
         if begin is not None:
             debits = debits.filter(date__gte = begin)
         if end is not None:
             debits = debits.filter(date__lte = end)
+        if isConfirmed is not None:
+            debits = debits.filter(isConfirmed=isConfirmed)
         return debits
-    def get_credits(self, begin=None, end=None):
-        credits = self.credits
+    def get_credits(self, begin=None, end=None, isConfirmed=None):
+        if self.cat in GAAP_CATS:
+            credits = self.credits
+        else:
+            credits = self.cc_credits
         if begin is not None:
             credits = credits.filter(date__gte = begin)
         if end is not None:
             credits = credits.filter(date__lte = end)
+        if isConfirmed is not None:
+            credits = credits.filter(isConfirmed=isConfirmed)
         return credits
     def dt_sum(self, *args, **kwargs):
         return sum(self.get_debits(*args, **kwargs).all().values_list("amount", flat=True))
@@ -74,8 +90,8 @@ class Account(models.Model):
         return sum(self.get_credits(*args, **kwargs).all().values_list("amount", flat=True))
     def balance(self, *args, **kwargs):
         return self.dt_sum(*args, **kwargs) - self.ct_sum(*args, **kwargs)
-    def ct_balance(self):
-        return -self.balance()
+    def ct_balance(self, *args, **kwargs):
+        return -self.balance(*args, **kwargs)
     def pretty_balance(self, *args, **kwargs):
         balance = self.balance(*args, **kwargs)
         if balance >= 0:
@@ -109,26 +125,6 @@ class Account(models.Model):
             return 'Balance sheet'
         else:
             return None
-
-class CostCentre(Account):
-    class Meta:
-        proxy = True
-    def transactions(self):
-        return CCTransaction.objects.filter( models.Q(debitAccount=self) | models.Q(creditAccount=self)).order_by("date").all()
-    def get_debits(self, begin=None, end=None):
-        debits = self.cc_debits
-        if begin is not None:
-            debits = debits.filter(date__gte = begin)
-        if end is not None:
-            debits = debits.filter(date__lte = end)
-        return debits
-    def get_credits(self, begin=None, end=None):
-        credits = self.cc_credits
-        if begin is not None:
-            credits = credits.filter(date__gte = begin)
-        if end is not None:
-            credits = credits.filter(date__lte = end)
-        return credits
 
 class Client(models.Model):
     account = models.ForeignKey('Account')
@@ -333,6 +329,7 @@ class TransactionParent(models.Model):
     recordedBy = models.ForeignKey("auth.User", editable=False)
     comments = models.TextField(blank=True)
     isConfirmed = models.BooleanField()
+    series = models.ForeignKey('TransactionSeries', null=True, blank=True)
     class Meta:
         ordering = ["date", "pk"]
         abstract = True
@@ -385,7 +382,7 @@ class Department(models.Model):
     shortName = models.CharField(max_length=8)
     minMonthlyDeduction = models.DecimalField(max_digits=16, decimal_places=2)
     invoiceDeductionFraction = models.DecimalField(max_digits=4, decimal_places=4)
-    costCentre = models.ForeignKey('CostCentre')
+    costCentre = models.ForeignKey('Account', limit_choices_to={'cat__in': INTERNAL_SHEET_CATS})
     description = models.TextField()
     expenseReviewers = models.ManyToManyField('Employee')
     def __str__(self):
@@ -543,3 +540,42 @@ class Statement(object):
         t = Template(self.client.statementTemplate)
         c = Context({'statement': self, 'STATIC_URL': settings.STATIC_URL})
         return t.render(c)
+
+class Scenario(models.Model):
+    name = models.CharField(max_length=100, help_text='A good, descriptive name for the scenario')
+    transactions = models.ManyToManyField('Transaction', blank=True)
+
+class TransactionSeries(models.Model):
+    name = models.CharField(max_length=100, help_text='A good, descriptive name for the series')
+    startDate = models.DateField(blank=True, help_text='Date of the first transaction in the series')
+    endDate = models.DateField(blank=True, help_text='Date after which the series will end.')
+    repeatFormula = models.CharField(max_length=253,
+            help_text='''
+            The formula is specified by a series of steps.
+            The steps are separated spaces.
+            Each step specifies a movement.
+            D = Day, M = Month, Y = Year, W = Week
+            wd = workday, ME = Month End
+
+            Example:
+            Every year on same day: Y+1
+            Every month: M+1
+            Every week: W+1
+            3 days before month end: M+1 D=ME D-3
+            first Wednesday every month: M+1 D=1 D=>Wednesday
+            ''')
+    scenarios = models.ManyToManyField('Scenario', blank=True)
+    comments = models.TextField(blank=True)
+
+class TransactionBlueprint(models.Model):
+    amount = models.DecimalField(max_digits=16, decimal_places=2)
+    debitAccount = models.ForeignKey("Account", related_name="debits+")
+    creditAccount = models.ForeignKey("Account", related_name="credits+")
+    series = models.ForeignKey('TransactionSeries', related_name='transaction_blueprints')
+    adjustment = models.CharField(max_length=253, help_text='''
+        {Y|M}{+|-|*}{amount}
+        Example:
+            Y*1.1
+            M+1000.0''')
+
+

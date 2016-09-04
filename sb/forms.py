@@ -7,8 +7,8 @@ from sb import models
 
 class PaySlipForm(forms.ModelForm):
     class Meta:
-        models.Payslip,
-        exclude=['docType', 'employee'],
+        model = models.Payslip
+        exclude=['docType', 'employee']
 
 class ReimbursementForm(forms.Form):
     amount = forms.DecimalField(decimal_places=2, required=False)
@@ -84,7 +84,7 @@ class ClientStatementForm(forms.Form):
     startDate = forms.DateField(help_text="Date from which to show transactions", required=True)
 
 class CCContributionForm(forms.Form):
-    costCentre = forms.ModelChoiceField(queryset=models.CostCentre.objects.filter(cat__in=models.INTERNAL_SHEET_CATS), required=True)
+    costCentre = forms.ModelChoiceField(queryset=models.Account.objects.filter(cat__in=models.INTERNAL_SHEET_CATS), required=True)
     fraction = forms.DecimalField(max_digits=5, decimal_places=4, required=True)
 
 class CCContributionFormSet(BaseFormSet):
@@ -99,15 +99,20 @@ CCCForms = formset_factory(form=CCContributionForm, formset=CCContributionFormSe
 
 class NewExpenseClaimForm(forms.ModelForm):
     class Meta:
-        models.ExpenseClaim, 
-        fields=['department', 'claimComments', 'claimAmount']
+        model = models.ExpenseClaim 
+        fields = ['department', 'claimComments', 'claimAmount']
 
 class ExpenseClaimReviewForm(forms.ModelForm):
     class Meta:
-        models.ExpenseClaim, 
-        fields=['reviewComments', 'approvedAmount']
+        model = models.ExpenseClaim
+        fields = ['reviewComments', 'approvedAmount']
 
 class SupportingDocForm(forms.ModelForm):
     class Meta:
-        models.SupportingDoc, 
-        fields=['description', 'document']
+        model = models.SupportingDoc
+        fields = ['description', 'document']
+
+class TransactionForm(forms.ModelForm):
+    class Meta:
+        model = models.Transaction
+        fields = ['amount', 'date', 'debitAccount', 'creditAccount', 'isConfirmed']

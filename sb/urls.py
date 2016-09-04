@@ -25,5 +25,6 @@ urlpatterns = patterns('sb.views',
     url(r'^claim/review/(?P<pk>\d*)/?$', 'review_claim', name='claim-review'),
     url(r'^claim/add/document/(?P<pk>\d*)/?$', 'claim_add_supporting_docs', name='claim-add-doc'),
     url(r'^claim/list/?$', 'claim_list', name='claim-list'),
+    url(r'^charts/expenses/?$', 'expense_chart', name='chart-expense'),
 
 )

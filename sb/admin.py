@@ -47,12 +47,6 @@ class AccountAdmin(admin.ModelAdmin):
     list_display = ["long_name", "name", "cat", "balance", "dt_count", "ct_count", 'gl_code']
     list_filter = ["parent", "cat"]
 
-class CCAdmin(AccountAdmin):
-    list_filter = ["parent"]
-    def queryset(self, request):
-        qs = super(CCAdmin, self).queryset(request)
-        return qs.filter(cat__in=models.INTERNAL_SHEET_CATS)
-
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = ['number', 'client']
     list_filter = ['client']
@@ -72,7 +66,6 @@ class EmployeeAdmin(admin.ModelAdmin):
     list_filter = ['appointment__department']
 
 admin.site.register(models.Account, AccountAdmin)
-admin.site.register(models.CostCentre, CCAdmin)
 admin.site.register(models.Transaction, TransactionAdmin)
 admin.site.register(models.CCTransaction, TransactionAdmin)
 admin.site.register(models.SourceDoc, SourceDocAdmin)

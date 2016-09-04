@@ -19,8 +19,8 @@ def check_perm(request, perm):
             return True
     raise PermissionDenied()
     
-def accounts_sum(accounts, begin=None, end=None):
-    return sum([a.balance(begin, end) for a in accounts])
+def accounts_sum(accounts, begin=None, end=None, isConfirmed=True):
+    return sum([a.balance(begin, end, isConfirmed) for a in accounts])
 
 @login_required
 def account_list(request):
@@ -33,12 +33,10 @@ def account_details(request, pk):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
     account = get_object_or_404(models.Account, pk=pk)
-    if account.cat in models.INTERNAL_SHEET_CATS:
-        account = get_object_or_404(models.CostCentre, pk=pk)
-    account.period_transactions = account.get_transactions(begin, end)
-    account.period_dt_sum = account.dt_sum(begin, end)
-    account.period_ct_sum = account.ct_sum(begin, end)
-    account.period_balance = account.pretty_balance(begin, end)
+    account.period_transactions = account.get_transactions(begin, end, True)
+    account.period_dt_sum = account.dt_sum(begin, end, True)
+    account.period_ct_sum = account.ct_sum(begin, end, True)
+    account.period_balance = account.pretty_balance(begin, end, True)
     return render(request, "sb/account_detail.html", 
             {"account": account, 'dateform': dateform})
 
@@ -63,7 +61,7 @@ def trans_details(request, pk):
 def trans_list(request):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
-    transactions = models.Transaction.objects.all()
+    transactions = models.Transaction.objects.all(isConfirmed=True)
     if begin is not None:
         transactions = transactions.filter(date__gte=begin)
         begin = begin.isoformat()
@@ -88,14 +86,11 @@ def trial_balance(request):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
     def annotate(cat):
-        if not cat in models.INTERNAL_SHEET_CATS:
-            accounts = list(models.Account.objects.filter(cat=cat).all())
-        else:
-            accounts = list(models.CostCentre.objects.filter(cat=cat).all())
+        accounts = list(models.Account.objects.filter(cat=cat).all())
         for a in accounts:
-            a.period_dt_sum = a.dt_sum(begin, end)
-            a.period_ct_sum = a.ct_sum(begin, end)
-            a.period_balance = a.balance(begin, end)
+            a.period_dt_sum = a.dt_sum(begin, end, True)
+            a.period_ct_sum = a.ct_sum(begin, end, True)
+            a.period_balance = a.balance(begin, end, True)
         return accounts
     accGroups = [ {'cat': cat[1], 'accounts': annotate(cat[0])}
                 for cat in models.ALL_ACCOUNT_CATEGORIES]
@@ -454,3 +449,20 @@ def review_claim(request, pk):
 def claim_list(request):
     claims = models.ExpenseClaim.objects.all()
     return render(request, 'sb/expense_claim_list.html', {'objects': claims})
+
+@login_required
+def expense_chart(request):
+    dateform = forms.DateRangeFilter(request.GET)
+    begin, end = dateform.get_range()
+
+    expenses = models.Account.objects.filter(cat='expense').all()
+    for e in expenses:
+        e.period_balance = abs(e.balance(begin=begin, end=end))
+    
+    return render(
+            request, 
+            'sb/expense_chart.html',
+            {'dateform': dateform, 
+            'expenses': expenses}
+        )
+
