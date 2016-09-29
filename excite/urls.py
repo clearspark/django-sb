@@ -14,6 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf.urls import url, include
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import urls as auth_urls
 import sb.urls
@@ -22,5 +23,9 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^accounts/', include(auth_urls)),
     url(r'^sb/', include(sb.urls)),
-    url(r'^/?', TemplateView.as_view(template_name='home_page.html')),
+    url(r'^/$', TemplateView.as_view(template_name='home_page.html')),
 ]
+
+if settings.DEBUG:
+    # static files (images, css, javascript, etc.)
+    urlpatterns.append(url(r'^userfiles/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}))
