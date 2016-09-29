@@ -29,8 +29,12 @@ class InterestForm(forms.Form):
 class SourceDocForm(forms.ModelForm):
     class Meta:
         model = models.SourceDoc
-        exclude = ['docType']
+        fields = '__all__'
 
+class InvoiceForm(forms.ModelForm):
+    class Meta:
+        model = models.SourceDoc
+        exclude = ['docType']
 class DateRangeFilter(forms.Form):
     begin = forms.DateField(required=False)
     end = forms.DateField(required=False)
@@ -115,4 +119,12 @@ class SupportingDocForm(forms.ModelForm):
 class TransactionForm(forms.ModelForm):
     class Meta:
         model = models.Transaction
-        fields = ['amount', 'date', 'debitAccount', 'creditAccount', 'isConfirmed']
+        fields = ['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed']
+
+class CCTransactionForm(forms.ModelForm):
+    class Meta:
+        model = models.CCTransaction
+        fields = ['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed']
+
+TransactionFormSet = modelformset_factory(models.Transaction, fields=['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed'], extra=2)
+CCTransactionFormSet = modelformset_factory(models.CCTransaction, fields=['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed'], extra=2)

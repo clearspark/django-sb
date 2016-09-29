@@ -12,14 +12,14 @@
         <thead>
             <tr>
                 <th>Account</th>
-                <th>Dt Total</th>
-                <th>Ct Total</th>
-                <th>Balance (dt positive)</th>
+                <th class='currency'>Dt Total</th>
+                <th class='currency'>Ct Total</th>
+                <th class='currency'>Balance (dt positive)</th>
             </tr>
         </thead>
         <tbody>
             {% for group in account_groups %}
-            <tr><th colspan="3">{{group.cat}}</th><th>{{group.total|floatformat:2|intcomma}}</tr>
+            <tr><th colspan="3">{{group.cat}}</th><th class='currency'>{{group.total|floatformat:2|intcomma}}</tr>
                 {% include "sb/trial_balance_base.html" with accounts=group.accounts %}
             {% endfor %}
         </tbody>

@@ -1,0 +1,98 @@
+{% extends "sb/base.html" %}
+
+{% load bootstrap3 %}
+
+{% block sbHead %}
+	{{block.super}}
+	<script type='text/javascript'>
+		$(document).ready(function() {
+			$('button.add-form-button').click(
+				function(eventObject) {
+					var formset_div = $(this).parent().parent();
+					console.log(formset_div);
+					var prefix = formset_div.attr('formprefix');
+					console.log(prefix);
+					var last_form = formset_div.find('.formset-form').last();
+					var initial_count = formset_div.find('.formset-form').length;
+					console.log(initial_count);
+					var new_form = last_form.clone();
+					var new_count = initial_count +1;
+					var input_elements = new_form.find('input, select');
+					for (var i = 0; i < input_elements.length; i++) {
+						input_elements[i].id = input_elements[i].id.replace(/\d+/g, new_count);
+						input_elements[i].name = input_elements[i].name.replace(/\d+/g, new_count);
+						input_elements[i].value = '';
+					}
+					last_form.after(new_form);
+					$('#id_' + prefix + '-TOTAL_FORMS').val(new_count);
+				}
+			);
+
+		});
+	</script>
+{% endblock %}
+
+<!--
+			$('#newLineItemTrigger').click(function(EventObject) {
+				var last_row = $('tr.lineform-tr').last();
+				var newLineItem = last_row.clone();
+				var L = newLineItem.children("td").children();
+				for (var i = 0; i < L.length; i++) {
+					var m = L[i].id.match(/(id_foo-)(\d+)(.*)/);
+					L[i].id = m[1]+(Number(m[2])+1).toFixed(0)+m[3];
+					L[i].value = "";
+					m = L[i].name.match(/(foo-)(\d+)(.*)/);
+					L[i].name = m[1]+(Number(m[2])+1).toFixed(0)+m[3];
+				}
+				last_row.after(newLineItem);
+				var C = $("input#id_foo-TOTAL_FORMS");
+				C.val((Number(C.val())+1).toFixed(0));
+				newLineItem.children("td:first-child").children("input:nth-child(2)").focus();
+			});
+-->
+
+{% block sbContent %}
+    <h1>Entering new document</h2>
+    <form action="" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+		<h2>Document</h2>
+		{% bootstrap_form docForm %}
+		
+		<h2>Transactions</h2>
+		<div id='transactions-forms' formprefix='tr'>
+			{{transFormSet.management_form}}
+			{% for f in transFormSet %}
+				<div class='formset-form'>
+					{% bootstrap_form f layout='horizontal' %}
+				</div>
+			{% endfor %}
+			{% buttons %}
+				<button class="btn btn-success add-form-button" id='newLineItemTrigger' type='button'>
+					{% bootstrap_icon "plus" %} Add
+				</button>
+			{% endbuttons %}
+		</div>
+
+		<h2>Cost Centre transactions</h2>
+		<div id='transactions-forms' formprefix='cc'>
+			{{cctransFormSet.management_form}}
+			{% for f in cctransFormSet %}
+				<div class='formset-form'>
+					{% bootstrap_form f layout='horizontal' %}
+				</div>
+			{% endfor %}
+			{% buttons %}
+				<button class="btn btn-success add-form-button" id='newLineItemTrigger' type='button'>
+					{% bootstrap_icon "plus" %} Add
+				</button>
+			{% endbuttons %}
+		</div>
+		{% buttons %}
+			<button class="btn btn-primary" type='submit'>
+				{% bootstrap_icon "ok" %} Submit
+			</button>
+		{% endbuttons %}
+    </form>
+
+{% endblock %}

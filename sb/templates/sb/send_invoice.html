@@ -5,9 +5,6 @@
 {% block sbHead %}
 	{{block.super}}
 	<script type='text/javascript'>
-		function calcVAT(EventObject){
-			$(this).parent().parent().find('.lineItemVAT input').val((Number($(this).val())*0.14).toFixed(2));
-		}
 		$(document).ready(function() {
 			$('td.lineItemAmount input').on('keydown', calcVAT);
 			$('#newLineItemTrigger').click(function(EventObject) {

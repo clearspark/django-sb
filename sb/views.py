@@ -48,6 +48,39 @@ def doc_list(request):
     return render(request, "sb/doc_list.html", {"docs": docs})
 
 @login_required
+def doc_new(request):
+    if request.method == 'POST':
+        docForm = forms.SourceDocForm(request.POST, request.FILES)
+        transFormSet = forms.TransactionFormSet(request.POST, prefix='tr')
+        cctransFormSet = forms.CCTransactionFormSet(request.POST, prefix='cc')
+        if docForm.is_valid() and transFormSet.is_valid() and cctransFormSet.is_valid():
+            doc = docForm.save(commit=False)
+            doc.recordedBy = request.user
+            doc.save()
+            transactions = transFormSet.save(commit=False)
+            cctransactions = cctransFormSet.save(commit=False)
+            for t in transactions:
+                t.sourceDocument = doc
+                t.recordedBy = request.user
+                t.save()
+            for cct in cctransactions:
+                cct.sourceDocument = doc
+                cct.recordedBy = request.user
+                cct.save()
+            return redirect(doc)
+        else:
+            #for is invlaid, display again
+            pass
+    else:
+        docForm = forms.SourceDocForm()
+        transFormSet = forms.TransactionFormSet(queryset=models.Transaction.objects.none(), prefix='tr')
+        cctransFormSet = forms.CCTransactionFormSet(queryset=models.CCTransaction.objects.none(), prefix='cc')
+    return render(request, 'sb/doc_new.html',
+            {'docForm': docForm, 
+            'transFormSet': transFormSet, 
+            'cctransFormSet': cctransFormSet})
+
+@login_required
 def doc_details(request, pk):
     doc = get_object_or_404(models.SourceDoc, pk=pk)
     return render(request, "sb/doc_detail.html", {"doc": doc})
@@ -465,4 +498,3 @@ def expense_chart(request):
             {'dateform': dateform, 
             'expenses': expenses}
         )
-
