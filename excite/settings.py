@@ -124,9 +124,9 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "excite", "static"),
-                )
+    )
+
 MEDIA_URL = '/userfiles/'
 
-MEDIAFILES_DIRS = (
-    os.path.join(BASE_DIR, "excite", "uesrfiles"),
-                )
+MEDIA_ROOT = os.path.join(BASE_DIR, "excite", "userfiles")
+
