@@ -328,7 +328,7 @@ class TransactionParent(models.Model):
     recordedTime = models.DateTimeField(auto_now=True)
     recordedBy = models.ForeignKey("auth.User", editable=False)
     comments = models.TextField(blank=True)
-    isConfirmed = models.BooleanField()
+    isConfirmed = models.BooleanField(default=True)
     series = models.ForeignKey('TransactionSeries', null=True, blank=True)
     class Meta:
         ordering = ["date", "pk"]
@@ -544,6 +544,7 @@ class Statement(object):
 class Scenario(models.Model):
     name = models.CharField(max_length=100, help_text='A good, descriptive name for the scenario')
     transactions = models.ManyToManyField('Transaction', blank=True)
+    cctransactions = models.ManyToManyField('CCTransaction', blank=True)
 
 class TransactionSeries(models.Model):
     name = models.CharField(max_length=100, help_text='A good, descriptive name for the series')
@@ -557,6 +558,12 @@ class TransactionSeries(models.Model):
             D = Day, M = Month, Y = Year, W = Week
             wd = workday, ME = Month End
 
+            Y{+|-}{n}
+            M{+|-|=}{n}
+            W{+|-}{n}
+            D{+|-|=}{n|ME}
+            D{>|=>|<|<=}{wd|ME}
+
             Example:
             Every year on same day: Y+1
             Every month: M+1
@@ -564,8 +571,111 @@ class TransactionSeries(models.Model):
             3 days before month end: M+1 D=ME D-3
             first Wednesday every month: M+1 D=1 D=>Wednesday
             ''')
-    scenarios = models.ManyToManyField('Scenario', blank=True)
-    comments = models.TextField(blank=True)
+    scenarios = models.ManyToManyField('Scenario')
+    comment = models.TextField(blank=True)
+
+    def apply_repeat_formula(self, date):
+        new_date = date
+        operations = self.repeatFormula.split(' ')
+        for o in operations:
+            if o[0] in ('Y','y'):
+                x = int(o[2:])
+                if o[1] == '+':
+                    new_date.year = new_date.year + x
+                elif o[1] == '-': 
+                    new_date.year = new_date.year - x
+                else:
+                    raise Exception('No valid operator specified for year')
+            elif o[0] in ('M','m'):
+                x = int(o[2:])
+                if o[1] == '+':
+                    new_month = new_date.month + x
+                elif o[1] == '-': 
+                    new_month = new_date.month - x
+                elif o[1] == '=': 
+                    new_month = x
+                else:
+                    raise Exception('No valid operator specified for month')
+                new_month += 1
+                dy = 0
+                while new_month > 12:
+                    dy += 1
+                    new_month -= 12
+                while new_month < 1:
+                    dy -= 1
+                    new_month += 12
+                new_month_ME = datetime.date(new_date.year + dy, new_month, 1) - datetime.timedelta(1)
+                new_date = datetime.date(new_month_ME.year, new_month_ME.year, min(new_date.day, new_month_ME.day))
+            elif o[0] in ('W','w'):
+                x = int(o[2:])
+                if o[1] == '+':
+                    new_date = new_date + datetime.timedelta(days=x*7)
+                elif o[1] == '-': 
+                    new_date = new_date - datetime.timedelta(days=x*7)
+                else:
+                    raise Exception('No valid operator specified for year')
+            elif o[0] in ('D','d'):
+                if o[1] == '+':
+                    x = int(o[2:])
+                    new_date = new_date + datetime.timedelta(days=x)
+                elif o[1] == '-': 
+                    x = int(o[2:])
+                    new_date = new_date - datetime.timedelta(days=x)
+                elif o[1] == '=': 
+                    x = o[2:]
+                    if x.lower() == 'me':
+                        new_date.day = month_end(new_date)
+                    else:
+                        new_date.day = int(x)
+                elif o[1:3] == '<=':
+                    x = o[3:]
+                    if x.lower() == "me":
+                        if new_date != month_end(new_date):
+                            new_date = datetime.date(new_date.year, new_date.month, 1) - datetime.timedelta(days=1)
+                    elif x.lower() == 'wd':
+                        while new_date.isoweekday in [6, 7]:
+                            new_date = new_date - datetime.timedelta(1)
+                elif o[1:3] == '=>':
+                    x = o[3:]
+                    if x.lower() == "me":
+                        new_date = month_end(new_date)
+                    elif x.lower() == 'wd':
+                        while new_date.isoweekday in [6, 7]:
+                            new_date = new_date + datetime.timedelta(1)
+                elif o[1] == '>':
+                    x = o[2:]
+                    if x.lower() == "me":
+                        new_date = month_end(new_date + datetime.timedelta(days=1))
+                    elif x.lower() == 'wd':
+                        new_date = new_date + datetime.timedelta(1)
+                        while new_date.isoweekday in [6, 7]:
+                            new_date = new_date + datetime.timedelta(1)
+                elif o[1] == '<':
+                    x = o[2:]
+                    if x.lower() == "me":
+                        new_date = datetime.date(new_date.year, new_date.month, 1) - datetime.timedelta(days=1)
+                    elif x.lower() == 'wd':
+                        new_date = new_date + datetime.timedelta(1)
+                        while new_date.isoweekday in [6, 7]:
+                            new_date = new_date + datetime.timedelta(1)
+                else:
+                    raise Exception('No valid operator specified for Day')
+        if new_date < date:
+            raise Exception('New date before old date')
+        return new_date
+
+
+
+                    
+
+
+
+    def save(self, *args, **kwargs):
+        super(TransactionSeries, self).save()
+        blueprints = self.transaction_blueprints.all()
+        date = self.startDate
+        while date <= endDate:
+            nextDate = date
 
 class TransactionBlueprint(models.Model):
     amount = models.DecimalField(max_digits=16, decimal_places=2)
@@ -578,4 +688,8 @@ class TransactionBlueprint(models.Model):
             Y*1.1
             M+1000.0''')
 
-
+def month_end(date):
+    if date.month == 12:
+        return 31
+    new_date = datetime.date(date.year, date.month+1, 1) - datetime.timedelta(days=1)
+    return new_date.day
