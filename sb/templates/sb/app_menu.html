@@ -18,12 +18,13 @@
     <li class='dropdown'>
 		<a href='#' class="dropdown-toggle" data-toggle="dropdown" >New transaction<span class="caret"></span></a>
         <ul class='dropdown-menu'>
-            <li><a href='{% url 'document-new' %}'>Add document</a></li>
+            <li><a href='{% url 'document-new' %}'>Add generic doc</a></li>
             <li><a href='{% url 'add-payslip' %}'>Add payslip</a></li>
             <li><a href='{% url 'send-invoice' %}'>Send invoice</a></li>
             <li><a href='{% url 'get-invoice' %}'>Get invoice</a></li>
             <li><a href='{% url 'apply-interest' %}'>Apply Interest</a></li>
             <li><a href='{% url 'claim-new' %}'>Claim Expense</a></li>
+            <li><a href='{% url 'series-new' %}'>Add transaction series</a></li>
         </ul>
     </li>
     <li class='dropdown'>

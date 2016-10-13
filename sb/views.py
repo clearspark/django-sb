@@ -81,6 +81,58 @@ def doc_new(request):
             'cctransFormSet': cctransFormSet})
 
 @login_required
+def series_detail(request, pk):
+    series = get_object_or_404(models.TransactionSeries, pk=pk)
+    return render(request, 'sb/series_detail.html', {'series', series})
+
+@login_required
+def series_new(request):
+    c = {}
+    if request.method == 'POST':
+        seriesForm = forms.TransactionSeriesForm(request.POST)
+        tbpfs = forms.TransactionBluePrintFormSet(request.POST, prefix='tbp')
+        if seriesForm.is_valid() and tbpfs.is_valid():
+            if 'create_series' in request.POST:
+                # Create new series
+                series = seriesForm.save()
+                blueprints = tbpfs.save(commit=False)
+                for b in blueprints:
+                    b.series = series
+                    b.save()
+                transactions = series.get_transactions(blueprints)
+                for t in transactions:
+                    t.recordedBy = request.user
+                    t.save()
+                    if t.transactionType == 'normal':
+                        series.transactions.add(t)
+                        for scenario in series.scenarios.all():
+                            scenario.transactions.add(t)
+                    else:
+                        series.cctransactions.add(t)
+                        for scenario in series.scenarios.all():
+                            scenario.cctransactions.add(t)
+                series.save()
+                for s in series.scenarios.all():
+                    s.save()
+
+                return redirect('trialbalance')
+            else:
+                # Create preview information and display again
+                series = seriesForm.save(commit=False)
+                blueprints = tbpfs.save(commit=False)
+                transactions = series.get_transactions(blueprints)
+                c['transactions'] = transactions
+                c['has_preview_data'] = True
+        else:
+            # display form again with error message
+            pass
+    else:
+        seriesForm = forms.TransactionSeriesForm()
+        tbpfs = forms.TransactionBluePrintFormSet(prefix='tbp')
+    c.update({'seriesForm': seriesForm, 'tbpfs': tbpfs})
+    return render(request, 'sb/series_new.html', c)
+
+@login_required
 def doc_details(request, pk):
     doc = get_object_or_404(models.SourceDoc, pk=pk)
     return render(request, "sb/doc_detail.html", {"doc": doc})
@@ -94,7 +146,7 @@ def trans_details(request, pk):
 def trans_list(request):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
-    transactions = models.Transaction.objects.all(isConfirmed=True)
+    transactions = models.Transaction.objects.filter(isConfirmed=True)
     if begin is not None:
         transactions = transactions.filter(date__gte=begin)
         begin = begin.isoformat()

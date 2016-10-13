@@ -33,32 +33,43 @@
 {% endblock %}
 
 {% block sbContent %}
-    <h1>Entering new document</h2>
-    <form action="" method="POST" enctype="multipart/form-data">
+    <h1>Creating new transaction series</h2>
+    <form action="" method="POST">
         {% csrf_token %}
-        
-		<h2>Document</h2>
-		{% bootstrap_form docForm %}
-		
-		<h2>Transactions</h2>
-		<div formprefix='tr'>
-			{{transFormSet.management_form}}
-			{% for f in transFormSet %}
-				<div class='formset-form'>
-					{% bootstrap_form f layout='horizontal' %}
-				</div>
-			{% endfor %}
-			{% buttons %}
-				<button class="btn btn-success add-form-button" type='button'>
-					{% bootstrap_icon "plus" %} Add
-				</button>
-			{% endbuttons %}
-		</div>
 
-		<h2>Cost Centre transactions</h2>
-		<div formprefix='cc'>
-			{{cctransFormSet.management_form}}
-			{% for f in cctransFormSet %}
+		{% if has_preview_data %}
+			<h2>Transaction preview</h2>
+			<table class='table'>
+				<thead>
+					<tr>
+						<th>Date</th>
+						<th>Debit account</th>
+						<th>Credit account</th>
+						<th>Amount</th>
+						<th>Type</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for t in transactions %}
+						<tr>
+							<td>{{t.date}}</td>
+							<td>{{t.debitAccount}}</td>
+							<td>{{t.creditAccount}}</td>
+							<td>{{t.amount}}</td>
+							<td>{{t.transactionType}}</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		{% endif %}
+        
+		<h2>Transaction Series</h2>
+		{% bootstrap_form seriesForm %}
+		
+		<h2>Transactions blueprints</h2>
+		<div formprefix='tpb'>
+			{{tbpfs.management_form}}
+			{% for f in tbpfs %}
 				<div class='formset-form'>
 					{% bootstrap_form f layout='horizontal' %}
 				</div>
@@ -71,9 +82,21 @@
 		</div>
 		{% buttons %}
 			<button class="btn btn-primary" type='submit'>
-				{% bootstrap_icon "ok" %} Submit
+				{% bootstrap_icon "ok" %} Preview
 			</button>
 		{% endbuttons %}
-    </form>
+		{% if has_preview_data %}
+			{% buttons %}
+				<button class="btn btn-primary" type='submit' name='create_series'>
+					{% bootstrap_icon "ok" %} Create
+				</button>
+			{% endbuttons %}
+		{% endif %}
+
+
+
+	</form>
+
+
 
 {% endblock %}

@@ -1,6 +1,6 @@
 {% extends "sb/base.html" %}
 {% block sbContent %}
-    <h2>{{doc}}</h2>
+    <h1>{{doc}}</h1>
     {% if doc.electronicCopy %}
         <p><a href="{{doc.electronicCopy.url}}">Download File</a></p>
     {% endif %}

@@ -128,3 +128,10 @@ class CCTransactionForm(forms.ModelForm):
 
 TransactionFormSet = modelformset_factory(models.Transaction, fields=['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed'], extra=2)
 CCTransactionFormSet = modelformset_factory(models.CCTransaction, fields=['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed'], extra=2)
+
+class TransactionSeriesForm(forms.ModelForm):
+    class Meta:
+        model = models.TransactionSeries
+        fields = ['name', 'startDate', 'endDate', 'repeatFormula', 'scenarios', 'comment']
+
+TransactionBluePrintFormSet = modelformset_factory(models.TransactionBlueprint, fields=['amount', 'debitAccount', 'creditAccount', 'transactionType', 'adjustment'], extra=2)
