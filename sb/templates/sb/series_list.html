@@ -1,0 +1,32 @@
+{% extends "sb/base.html" %}
+
+{% block sbContent %}
+
+    <h1>Series list</h1>
+
+    <table class="frame sortable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Comment</th>
+                <th>Transactions</th>
+                <th>Cost centre transactions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in series %}
+                <tr>
+					<td><a href="{{s.get_absolute_url}}">{{s.name}}</a></td>
+                    <td>{{s.startDate}}</td>
+                    <td>{{s.endDate}}</td>
+                    <td>{{s.comment|linebreaks|safe}}</td>
+                    <td>{{s.t_count}}</td>
+                    <td>{{s.cct_count}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+{% endblock %}

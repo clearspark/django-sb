@@ -23,7 +23,7 @@ urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^accounts/', include(auth_urls)),
     url(r'^sb/', include(sb.urls)),
-    url(r'^/$', TemplateView.as_view(template_name='home_page.html')),
+    url(r'^/?$', TemplateView.as_view(template_name='home_page.html')),
 ]
 
 if settings.DEBUG:

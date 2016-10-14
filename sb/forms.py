@@ -135,3 +135,7 @@ class TransactionSeriesForm(forms.ModelForm):
         fields = ['name', 'startDate', 'endDate', 'repeatFormula', 'scenarios', 'comment']
 
 TransactionBluePrintFormSet = modelformset_factory(models.TransactionBlueprint, fields=['amount', 'debitAccount', 'creditAccount', 'transactionType', 'adjustment'], extra=2)
+
+class VOTForm(forms.Form):
+    time_units = forms.ChoiceField(choices=(('daily', 'Daily'), ('monthly', 'Monthly')))
+    accounts = forms.ModelMultipleChoiceField(queryset=models.Account.objects.all())

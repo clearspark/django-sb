@@ -471,11 +471,13 @@ class ExpenseClaim(models.Model):
 
 class Scenario(models.Model):
     name = models.CharField(max_length=100, help_text='A good, descriptive name for the scenario')
-    transactions = models.ManyToManyField('Transaction', blank=True)
-    cctransactions = models.ManyToManyField('CCTransaction', blank=True)
+    transactions = models.ManyToManyField('Transaction', blank=True, editable=False)
+    cctransactions = models.ManyToManyField('CCTransaction', blank=True, editable=False)
+    def __str__(self):
+        return self.name
 
 class TransactionSeries(models.Model):
-    name = models.CharField(max_length=100, help_text='A good, descriptive name for the series')
+    name = models.CharField(max_length=100, help_text='A good, descriptive name for the series', unique=True)
     startDate = models.DateField(blank=True, help_text='Date of the first transaction in the series')
     endDate = models.DateField(blank=True, help_text='Date after which the series will end.')
     repeatFormula = models.CharField(max_length=253,
@@ -506,6 +508,9 @@ class TransactionSeries(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse('series-details', kwargs={'pk': self.pk})
 
     def apply_repeat_formula(self, date):
         new_date = date

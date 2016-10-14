@@ -1,0 +1,52 @@
+{% extends "sb/base.html" %}
+{% block sbContent %}
+    <h1>Series: {{series}}</h1>
+	<h2>Comment</h2>
+	<p>
+		{{series.comment|linebreaks}}
+	</p>
+	<h2>Transactions</h2>
+	<table class='table'>
+		<thead>
+			<tr>
+				<th>Date</th>
+				<th>Debit account</th>
+				<th>Credit account</th>
+				<th>Amount</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for t in series.transactions.all %}
+				<tr>
+					<td>{{t.date}}</td>
+					<td>{{t.debitAccount}}</td>
+					<td>{{t.creditAccount}}</td>
+					<td>{{t.amount}}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<h2>Cost Centre Transactions</h2>
+	<table class='table'>
+		<thead>
+			<tr>
+				<th>Date</th>
+				<th>Debit account</th>
+				<th>Credit account</th>
+				<th>Amount</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for t in series.cctransactions.all %}
+				<tr>
+					<td>{{t.date}}</td>
+					<td>{{t.debitAccount}}</td>
+					<td>{{t.creditAccount}}</td>
+					<td>{{t.amount}}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+
+{% endblock %}

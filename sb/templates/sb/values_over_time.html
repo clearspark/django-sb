@@ -1,0 +1,69 @@
+{% extends 'sb/base.html' %}
+
+{% load static %}
+{% load bootstrap3 %}
+
+{% block sbHead %}
+	<script language="javascript" type="text/javascript" src="{% static 'flot/jquery.flot.js' %}"></script>
+	<script language="javascript" type="text/javascript" src="{% static 'flot/jquery.flot.time.js' %}"></script>
+	<script type="text/javascript">
+		function gd(year, month, day) {
+			    return new Date(year, month - 1, day).getTime();
+		}
+		{% for a in accounts %}
+			var data{{a.pk}} = [];
+			{% for db in a.balance_series %}
+			data{{a.pk}}.push([gd({{db.0.year}}, {{db.0.month}}, {{db.0.day}}), {{db.1}}]);
+			{% endfor %}
+		{% endfor %}
+		$(document).ready(function(){
+			$.plot($("#placeholder"), [
+					{% for a in accounts %}{ label:"{{a}}", data: data{{a.pk}} }, {% endfor %}
+			], {
+				xaxis: {
+					mode: "time",
+				}
+			});
+			{% for a in accounts %}
+				$.plot($("#placeholder{{a.pk}}"), [data{{a.pk}}], {
+					xaxis: {
+						mode: "time",
+					}
+				});
+			{% endfor %}
+		});
+
+	</script>
+
+{% endblock %}
+
+
+{% block sbContent %}
+	<h1>Values over time</h1>
+
+	<form method='GET'>
+		{% bootstrap_form form %}
+		{% bootstrap_form dateform %}
+		{% buttons %}
+			<button type="submit" name='submit' class="btn btn-primary">
+				{% bootstrap_icon "filter" %} Show
+			</button>
+		{% endbuttons %}
+	</form>
+
+	<h3>All</h3>
+	<div id="placeholder" style="width:1100px;height:300px"></div>
+
+	{% for a in accounts %}
+		<h3>{{a.href|safe}}</h3>
+		<div id="placeholder{{a.pk}}" style="width:1100px;height:300px"></div>
+		{% comment %}<table>
+			<tr><th>Date</th><th>Balance</th></tr>
+			{% for db_tuple in a.balance_series %}
+				<tr><td>{{db_tuple.0}}</td><td>{{db_tuple.1}}</td></tr>
+			{% endfor %}
+		{% endcomment %}
+		</table>
+	{% endfor %}
+
+{% endblock %}

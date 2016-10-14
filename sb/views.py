@@ -81,9 +81,17 @@ def doc_new(request):
             'cctransFormSet': cctransFormSet})
 
 @login_required
-def series_detail(request, pk):
+def series_list(request):
+    series = models.TransactionSeries.objects
+    series = series.annotate(t_count=models.models.Count('transactions', distinct=True))
+    series = series.annotate(cct_count=models.models.Count('cctransactions', distinct=True))
+    return render(request, 'sb/series_list.html', {'series': series})
+
+
+@login_required
+def series_details(request, pk):
     series = get_object_or_404(models.TransactionSeries, pk=pk)
-    return render(request, 'sb/series_detail.html', {'series', series})
+    return render(request, 'sb/series_details.html', {'series': series})
 
 @login_required
 def series_new(request):
@@ -549,4 +557,39 @@ def expense_chart(request):
             'sb/expense_chart.html',
             {'dateform': dateform, 
             'expenses': expenses}
+        )
+
+def values_over_time(request):
+    c = {}
+    dateform = forms.DateRangeFilter(request.GET)
+    begin, end = dateform.get_range()
+    if 'submit' in request.GET:
+        form = forms.VOTForm(request.GET)
+        if form.is_valid():
+            c['show_report'] = True
+            c['accounts'] = accounts = form.cleaned_data['accounts']
+            for a in accounts:
+                transactions = a.get_transactions(end=end).all()
+                data = []
+                balance = Decimal('0.00')
+                date = None
+                for t in  transactions:
+                    if t.date != date:
+                        if date is not None and date >= begin:
+                            data.append((date, balance,))
+                        date = t.date
+                    if t.debitAccount == a:
+                        balance += t.amount
+                    else:
+                        balance -= t.amount
+                data.append((date, balance,))
+                a.balance_series = data
+    else:
+        form = forms.VOTForm()
+
+    c.update({'dateform': dateform, 'form': form})
+    return render(
+            request, 
+            'sb/values_over_time.html',
+            c
         )
