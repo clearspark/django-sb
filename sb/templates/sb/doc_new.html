@@ -19,8 +19,8 @@
 					var new_count = initial_count +1;
 					var input_elements = new_form.find('input, select');
 					for (var i = 0; i < input_elements.length; i++) {
-						input_elements[i].id = input_elements[i].id.replace(/\d+/g, new_count);
-						input_elements[i].name = input_elements[i].name.replace(/\d+/g, new_count);
+						input_elements[i].id = input_elements[i].id.replace(/\d+/g, new_count-1);
+						input_elements[i].name = input_elements[i].name.replace(/\d+/g, new_count-1);
 						input_elements[i].value = '';
 					}
 					last_form.after(new_form);
