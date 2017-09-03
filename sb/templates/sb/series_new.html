@@ -9,9 +9,7 @@
 			$('button.add-form-button').click(
 				function(eventObject) {
 					var formset_div = $(this).parent().parent();
-					console.log(formset_div);
 					var prefix = formset_div.attr('formprefix');
-					console.log(prefix);
 					var last_form = formset_div.find('.formset-form').last();
 					var initial_count = formset_div.find('.formset-form').length;
 					console.log(initial_count);
@@ -19,8 +17,8 @@
 					var new_count = initial_count +1;
 					var input_elements = new_form.find('input, select');
 					for (var i = 0; i < input_elements.length; i++) {
-						input_elements[i].id = input_elements[i].id.replace(/\d+/g, new_count);
-						input_elements[i].name = input_elements[i].name.replace(/\d+/g, new_count);
+						input_elements[i].id = input_elements[i].id.replace(/\d+/g, new_count-1);
+						input_elements[i].name = input_elements[i].name.replace(/\d+/g, new_count-1);
 						input_elements[i].value = '';
 					}
 					last_form.after(new_form);
@@ -68,7 +66,7 @@
 		{% bootstrap_form seriesForm %}
 		
 		<h2>Transactions blueprints</h2>
-		<div formprefix='tpb'>
+		<div formprefix='tbp'>
 			{{tbpfs.management_form}}
 			{% for f in tbpfs %}
 				<div class='formset-form'>
