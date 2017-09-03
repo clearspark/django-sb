@@ -136,7 +136,8 @@ def series_new(request):
             pass
     else:
         seriesForm = forms.TransactionSeriesForm()
-        tbpfs = forms.TransactionBluePrintFormSet(prefix='tbp')
+        tbpfs = forms.TransactionBluePrintFormSet(prefix='tbp', queryset=models.TransactionBlueprint.objects.none())
+        print(tbpfs)
     c.update({'seriesForm': seriesForm, 'tbpfs': tbpfs})
     return render(request, 'sb/series_new.html', c)
 

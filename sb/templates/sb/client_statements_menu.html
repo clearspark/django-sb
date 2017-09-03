@@ -1,8 +1,11 @@
 {% extends "sb/base.html" %}
 
+{% load bootstrap3 %}
+
 {% block sbContent %}
     <h1>Client statements</h1>
     <form action="" method="GET">
-        {{form}}
+		{{form.media}}
+        {% bootstrap_form form %}
         <input type="submit" value="View statement"/>
 {% endblock %}

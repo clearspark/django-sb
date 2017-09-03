@@ -1,13 +1,18 @@
 {% extends "sb/base.html" %}
 
-{% block sbContent %}
-<h1>{{heading}}</h2>
-<form action="" method="POST"{% if has_files %} enctype="multipart/form-data"{% endif %}>
-    {% csrf_token %}
-    <table class='form-table'>
-        {{form}}
-    </table>
-    <input type=submit value="submit"/>
-</form>
+{% load bootstrap3 %}
 
+{% block sbHead %}
+	{{block.super}}
+	{{form.media}}
+{% endblock %}
+
+
+{% block sbContent %}
+	<h1>{{heading}}</h2>
+	<form action="" method="POST"{% if has_files %} enctype="multipart/form-data"{% endif %}>
+		{% csrf_token %}
+		{% bootstrap_form form %}
+		<input type=submit value="submit"/>
+	</form>
 {% endblock %}

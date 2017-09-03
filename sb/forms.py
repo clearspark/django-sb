@@ -4,6 +4,18 @@ from django.forms.models import modelformset_factory
 from django.forms.formsets import formset_factory, BaseFormSet
 #from autocomplete_light import modelform_factory
 from sb import models
+from datetimewidget.widgets import DateWidget
+
+dateTimeOptions = {
+        'format': 'yyyy-mm-dd HH:ii:ss',
+        'startView': 1,
+        'todayBtn': 'true',
+    }
+
+dateOptions = {
+        'format': 'yyyy-mm-dd',
+        'startView': 2
+    }
 
 class PaySlipForm(forms.ModelForm):
     class Meta:
@@ -18,7 +30,7 @@ ReimbursementFormSet = formset_factory(ReimbursementForm, extra=3)
 
 class InterestForm(forms.Form):
     docNumber = forms.CharField(max_length=40)
-    date = forms.DateField()
+    date = forms.DateField(widget=DateWidget(options=dateOptions, bootstrap_version=3))
     accounts = forms.ModelMultipleChoiceField(models.Account.objects.filter(parent__name="Creditors"))
     expense = forms.ModelChoiceField(models.Account.objects.filter(parent__name="Interest Cost"))
     year = forms.IntegerField(min_value=2010, max_value=2015)
@@ -36,8 +48,8 @@ class InvoiceForm(forms.ModelForm):
         model = models.SourceDoc
         exclude = ['docType']
 class DateRangeFilter(forms.Form):
-    begin = forms.DateField(required=False)
-    end = forms.DateField(required=False)
+    begin = forms.DateField(required=False, widget=DateWidget(options=dateOptions, bootstrap_version=3))
+    end = forms.DateField(required=False, widget=DateWidget(options=dateOptions, bootstrap_version=3))
 
     def get_range(self):
         if self.is_valid():
@@ -48,7 +60,7 @@ class DateRangeFilter(forms.Form):
 class SendInvoiceForm(forms.Form):
     client = forms.ModelChoiceField(models.Client.objects.all())
     isQuote = forms.BooleanField(initial=False, required=False)
-    date = forms.DateField(required=True)
+    date = forms.DateField(required=True, widget=DateWidget(options=dateOptions, bootstrap_version=3))
     comments = forms.CharField(required=False, widget=forms.Textarea(attrs={'cols': 90}),
             help_text="Goes in accounting app, client does not see this.")
     clientSummary = forms.CharField(max_length=200, required=True,
@@ -71,7 +83,7 @@ class GetInvoiceForm(forms.Form):
     vendor = forms.ModelChoiceField(models.Account.objects.filter(parent__name="Creditors"))
     spentOn = forms.ModelChoiceField(models.Account.objects.filter(cat__in=["Expense", "Asset"]), label="Spent on")
     amount = forms.DecimalField(max_digits=16, decimal_places=2)
-    date = forms.DateField()
+    date = forms.DateField(widget=DateWidget(options=dateOptions, bootstrap_version=3))
     vat = forms.ChoiceField(choices=(('auto', 'Auto'), ('specify', 'Specify'), ('none', 'None')),
         help_text='Please specify whether VAT is to be added automatically, manually specified or left out.', required=True)
     VATAmount = forms.DecimalField(label="VAT amount", max_digits=16, decimal_places=2, required=False)
@@ -84,8 +96,8 @@ class AccountFilter(forms.Form):
 
 class ClientStatementForm(forms.Form):
     client = forms.ModelChoiceField(models.Client.objects.all(), label="Client")
-    statementDate = forms.DateField(required=True)
-    startDate = forms.DateField(help_text="Date from which to show transactions", required=True)
+    statementDate = forms.DateField(required=True, widget=DateWidget(options=dateOptions, bootstrap_version=3))
+    startDate = forms.DateField(help_text="Date from which to show transactions", required=True, widget=DateWidget(options=dateOptions, bootstrap_version=3))
 
 class CCContributionForm(forms.Form):
     costCentre = forms.ModelChoiceField(queryset=models.Account.objects.filter(cat__in=models.INTERNAL_SHEET_CATS), required=True)
@@ -120,21 +132,31 @@ class TransactionForm(forms.ModelForm):
     class Meta:
         model = models.Transaction
         fields = ['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed']
+        widgets = {
+                'date': DateWidget(options=dateOptions, bootstrap_version=3)
+            }
 
 class CCTransactionForm(forms.ModelForm):
     class Meta:
         model = models.CCTransaction
         fields = ['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed']
+        widgets = {
+                'date': DateWidget(options=dateOptions, bootstrap_version=3)
+            }
 
-TransactionFormSet = modelformset_factory(models.Transaction, fields=['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed'], extra=2)
-CCTransactionFormSet = modelformset_factory(models.CCTransaction, fields=['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed'], extra=2)
+TransactionFormSet = modelformset_factory(models.Transaction, fields=['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed'], form=TransactionForm, extra=2)
+CCTransactionFormSet = modelformset_factory(models.CCTransaction, fields=['date', 'amount', 'debitAccount', 'creditAccount', 'isConfirmed'], form=CCTransactionForm, extra=2)
 
 class TransactionSeriesForm(forms.ModelForm):
     class Meta:
         model = models.TransactionSeries
         fields = ['name', 'startDate', 'endDate', 'repeatFormula', 'scenarios', 'comment']
+        widgets = {
+                'startDate': DateWidget(options=dateOptions, bootstrap_version=3),
+                'endDate': DateWidget(options=dateOptions, bootstrap_version=3),
+            }
 
-TransactionBluePrintFormSet = modelformset_factory(models.TransactionBlueprint, fields=['amount', 'debitAccount', 'creditAccount', 'transactionType', 'adjustment'], extra=2)
+TransactionBluePrintFormSet = modelformset_factory(model=models.TransactionBlueprint, fields=['amount', 'debitAccount', 'creditAccount', 'transactionType', 'adjustment'], extra=2)
 
 class VOTForm(forms.Form):
     time_units = forms.ChoiceField(choices=(('daily', 'Daily'), ('monthly', 'Monthly')))
