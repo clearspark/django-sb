@@ -7,6 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('sb', '__first__'),
         ('sb', '0008_auto_20160903_1659'),
     ]
 
@@ -40,9 +41,9 @@ class Migration(migrations.Migration):
                 ('scenarios', models.ManyToManyField(to='sb.Scenario')),
             ],
         ),
-        migrations.DeleteModel(
-            name='CostCentre',
-        ),
+        #migrations.DeleteModel(
+        #    name='CostCentre',
+        #),
         migrations.AlterField(
             model_name='cctransaction',
             name='isConfirmed',
