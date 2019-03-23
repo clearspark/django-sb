@@ -5,13 +5,18 @@ import calendar
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404, HttpResponse
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
 
 from sb import models, forms
 # Create your views here.
+
+def is_bookie(user):
+    if not hasattr(user, 'bookie'):
+        raise Http404
+    return True
 
 def check_perm(request, perm):
     if hasattr(request.user, 'bookie'):
@@ -22,13 +27,13 @@ def check_perm(request, perm):
 def accounts_sum(accounts, begin=None, end=None, isConfirmed=True):
     return sum([a.balance(begin, end, isConfirmed) for a in accounts])
 
-@login_required
+@user_passes_test(is_bookie)
 def account_list(request):
     accounts = models.Account.objects.all()
     return render(request, "sb/account_list.html",
             {"accounts": accounts})
 
-@login_required
+@user_passes_test(is_bookie)
 def account_details(request, pk):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
@@ -40,14 +45,14 @@ def account_details(request, pk):
     return render(request, "sb/account_detail.html", 
             {"account": account, 'dateform': dateform})
 
-@login_required
+@user_passes_test(is_bookie)
 def doc_list(request):
     from django.db.models import Min, Max
     docs = models.SourceDoc.objects.annotate(min_date=Min("transactions__date"))
     docs = docs.annotate(max_date=Max("transactions__date")).all()
     return render(request, "sb/doc_list.html", {"docs": docs})
 
-@login_required
+@user_passes_test(is_bookie)
 def doc_new(request):
     if request.method == 'POST':
         docForm = forms.SourceDocForm(request.POST, request.FILES)
@@ -80,7 +85,7 @@ def doc_new(request):
             'transFormSet': transFormSet, 
             'cctransFormSet': cctransFormSet})
 
-@login_required
+@user_passes_test(is_bookie)
 def series_list(request):
     series = models.TransactionSeries.objects
     series = series.annotate(t_count=models.models.Count('transactions', distinct=True))
@@ -88,12 +93,12 @@ def series_list(request):
     return render(request, 'sb/series_list.html', {'series': series})
 
 
-@login_required
+@user_passes_test(is_bookie)
 def series_details(request, pk):
     series = get_object_or_404(models.TransactionSeries, pk=pk)
     return render(request, 'sb/series_details.html', {'series': series})
 
-@login_required
+@user_passes_test(is_bookie)
 def series_new(request):
     c = {}
     if request.method == 'POST':
@@ -140,17 +145,17 @@ def series_new(request):
     c.update({'seriesForm': seriesForm, 'tbpfs': tbpfs})
     return render(request, 'sb/series_new.html', c)
 
-@login_required
+@user_passes_test(is_bookie)
 def doc_details(request, pk):
     doc = get_object_or_404(models.SourceDoc, pk=pk)
     return render(request, "sb/doc_detail.html", {"doc": doc})
 
-@login_required
+@user_passes_test(is_bookie)
 def trans_details(request, pk):
     trans = get_object_or_404(models.Transaction, pk=pk)
     return render(request, "sb/trans_detail.html", {"trans": trans})
 
-@login_required
+@user_passes_test(is_bookie)
 def trans_list(request):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
@@ -174,7 +179,7 @@ def trans_list(request):
             {"transactions": transactions, 'dateform': dateform, 'begin': begin,
                 'end': end, 'accountform': accountform, 'total': total})
 
-@login_required
+@user_passes_test(is_bookie)
 def trial_balance(request):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
@@ -192,13 +197,13 @@ def trial_balance(request):
     context = {"account_groups": accGroups, 'dateform': dateform, 'begin':begin, 'end': end}
     return render(request, "sb/trial_balance.html", context)
 
-@login_required
+@user_passes_test(is_bookie)
 def add_payslip_0(request):
     check_perm(request, 'canAddPayslip')
     employees = models.Employee.objects.filter(isActive=True)
     return render(request, "sb/add_payslip_0.html", {'employees': employees})
 
-@login_required
+@user_passes_test(is_bookie)
 def add_payslip_1(request, employee_pk):
     check_perm(request, 'canAddPayslip')
     employee = get_object_or_404(models.Employee, pk=employee_pk)
@@ -259,7 +264,7 @@ def add_payslip_1(request, employee_pk):
             {'employee': employee, 'pform': pform, 'cccforms': cccforms})
 
 import decimal
-@login_required
+@user_passes_test(is_bookie)
 def send_invoice(request):
     check_perm(request, 'canSendInvoice')
     if request.method == "GET":
@@ -293,7 +298,7 @@ def send_invoice(request):
     return render(request, "sb/send_invoice.html", 
             {'form': form, 'lineforms': lineForms})
 
-@login_required
+@user_passes_test(is_bookie)
 def get_invoice(request):
     check_perm(request, 'canReceiveInvoice')
     if request.method == "GET":
@@ -345,7 +350,7 @@ def get_invoice(request):
     return render(request, "sb/get_invoice.html", 
             {'tform': tform, 'dform': dform})
 
-@login_required
+@user_passes_test(is_bookie)
 def income_statement(request):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
@@ -361,7 +366,7 @@ def income_statement(request):
     totalSum = salesIncomeSum + otherIncomeSum + expenseSum
     return render(request, "sb/income_statement.html", {"cats":[sales, other, expenses], "net": totalSum, 'dateform': dateform})
 
-@login_required
+@user_passes_test(is_bookie)
 def extract(request, dataType):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
@@ -391,7 +396,7 @@ def extract(request, dataType):
             writer.writerow( [a.gl_code, a.long_name(), a.get_cat_display(), a.statement_type(), a.dt_sum(begin=begin, end=end), a.ct_sum(begin, end), a.balance(begin=begin, end=end)] )
         return response
 
-@login_required
+@user_passes_test(is_bookie)
 def apply_interest(request):
     check_perm(request, 'canApplyInterest')
     if request.method == "POST":
@@ -423,7 +428,7 @@ def apply_interest(request):
         form = forms.InterestForm()
     return render(request, 'sb/generic_form.html', {'form': form, 'heading': "Apply Interest"})
 
-@login_required
+@user_passes_test(is_bookie)
 def client_account_statement(request):
     form = forms.ClientStatementForm(request.GET or None)
     if form.is_valid():
@@ -437,7 +442,7 @@ def client_account_statement(request):
     else:
         return render(request, 'sb/client_statements_menu.html', {'form': form})
     
-@login_required
+@user_passes_test(is_bookie)
 def view_invoice(request, invoice_nr):
     invoice = get_object_or_404(models.Invoice, number=invoice_nr)
     client = invoice.client
@@ -448,7 +453,7 @@ def view_invoice(request, invoice_nr):
     else:
         return HttpResponse(invoice.html)
 
-@login_required
+@user_passes_test(is_bookie)
 def regen_invoice(request, invoice_nr):
     invoice = get_object_or_404(models.Invoice, number=invoice_nr)
     client = invoice.client
@@ -458,7 +463,7 @@ def regen_invoice(request, invoice_nr):
     invoice.save()
     return redirect(invoice)
 
-@login_required
+@user_passes_test(is_bookie)
 def claim_edit(request, pk=None):
     if pk is not None:
         claim = models.ExpenseClaim.objects.get(pk=pk)
@@ -482,7 +487,7 @@ def claim_edit(request, pk=None):
             form = forms.NewExpenseClaimForm(instance=claim)
     return render(request, 'sb/generic_form.html', {'form': form, 'heading': 'New claim'})
 
-@login_required
+@user_passes_test(is_bookie)
 def claim_add_supporting_docs(request, pk):
     claim = get_object_or_404(models.ExpenseClaim, pk=pk)
     role = claim.get_role(request.user)
@@ -500,13 +505,13 @@ def claim_add_supporting_docs(request, pk):
     return render(request, 'sb/generic_form.html',
             {'form': form, 'has_files': True, 'heading': 'Adding supporting document'})
     
-@login_required
+@user_passes_test(is_bookie)
 def claim_detail(request, pk):
     claim = get_object_or_404(models.ExpenseClaim, pk=pk)
     role = claim.get_role(request.user)
     return render(request, 'sb/claim_detail.html', {'claim': claim, 'role': role})
 
-@login_required
+@user_passes_test(is_bookie)
 def submit_claim(request, pk):
     claim = get_object_or_404(models.ExpenseClaim, pk=pk)
     role = claim.get_role(request.user)
@@ -516,7 +521,7 @@ def submit_claim(request, pk):
     messages.info(request, "Your claim has been submitted for review")
     return redirect(claim)
 
-@login_required
+@user_passes_test(is_bookie)
 def review_claim(request, pk):
     claim = get_object_or_404(models.ExpenseClaim, pk=pk)
     role = claim.get_role(request.user)
@@ -538,12 +543,12 @@ def review_claim(request, pk):
                 'heading': 'Reviewing claim: %s' %claim.__str__()},
         )
 
-@login_required
+@user_passes_test(is_bookie)
 def claim_list(request):
     claims = models.ExpenseClaim.objects.all()
     return render(request, 'sb/expense_claim_list.html', {'objects': claims})
 
-@login_required
+@user_passes_test(is_bookie)
 def expense_chart(request):
     dateform = forms.DateRangeFilter(request.GET)
     begin, end = dateform.get_range()
@@ -559,6 +564,7 @@ def expense_chart(request):
             'expenses': expenses}
         )
 
+@user_passes_test(is_bookie)
 def values_over_time(request):
     c = {}
     dateform = forms.DateRangeFilter(request.GET)
