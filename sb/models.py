@@ -147,7 +147,8 @@ def source_doc_file_path(instance, filename):
 class SourceDoc(models.Model):
     number = models.CharField(max_length=40, unique=True, help_text="Document number")
     electronicCopy = models.FileField(upload_to=source_doc_file_path, blank=True, null=True, verbose_name="Electronic copy")
-    recordedTime = models.DateTimeField(auto_now=True)
+    recordedTime = models.DateTimeField(auto_now_add=True)
+    editedTime = models.DateTimeField(auto_now=True)
     recordedBy = models.ForeignKey("auth.User", editable=False)
     comments = models.TextField(blank=True, help_text="Any comments/extra info/meta data about this doc.")
     docType = models.CharField(max_length=20, choices=(
