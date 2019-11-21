@@ -7,7 +7,7 @@ setup(
     author = "Matthys Kroon",
     author_email = "matthysk@clearspark.co.za",
     description='Accounting app.',
-    license = "Proprietary, copyright ClearSpark (c) 2016",
+    license = "GNU AFFERO GENERAL PUBLIC LICENSE",
     packages=['sb'],
     include_package_data=True,
     install_requires=[
